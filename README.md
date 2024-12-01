@@ -1,6 +1,6 @@
 # Advent of Code
 
-This repo holds my solutions to the (Advent of Code)[https://adventofcode.com/2024] for the year 2024.
+This repo holds my solutions to the [Advent of Code](https://adventofcode.com/2024) for the year 2024.
 All solutions are written in C++ using very minimal use of the C standard library, and C++11.
 
 To build the solution for a specific day, run these commands in your terminal (for UNIX-like operating systems):
