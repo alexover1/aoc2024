@@ -1,0 +1,9 @@
+*.exe
+*.pdb
+*.dSYM
+
+# Input files
+sample.txt
+input.txt
+
+Day1
