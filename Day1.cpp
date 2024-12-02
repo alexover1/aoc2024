@@ -5,6 +5,7 @@ void ParseInput(string Input, array<u64>& ListOne, array<u64>& ListTwo)
     while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
+        if(!Line.Length) continue;
 
         string StrA = ChopBy(&Line, ' ');
         Line = TrimLeft(Line);
@@ -85,10 +86,9 @@ string SampleData = R""""(
 
 int main(int ArgCount, char **Args)
 {
-    char *Program = ShiftArgs(&ArgCount, &Args);
-
     string Input = SampleData;
 
+    char *Program = ShiftArgs(&ArgCount, &Args);
     if(ArgCount > 0)
     {
         char *FileName = ShiftArgs(&ArgCount, &Args);

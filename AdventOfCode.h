@@ -10,7 +10,11 @@
 #define Assert assert
 #define Max(A, B) (((A) > (B)) ? (A) : (B))
 #define Min(A, B) (((A) > (B)) ? (B) : (A))
-#define Abs(A) ((A) < 0 ? -(A) : (A))
+
+template<typename T> inline const T Abs(T const & x)
+{
+    return (x < 0) ? -x : x;
+}
 
 typedef int8_t   s8;
 typedef int16_t  s16;
