@@ -136,6 +136,12 @@ struct buffer {
 
 typedef buffer string;
 
+inline string operator ""_s(const char *ZString, size_t Length)
+{
+    string Result = {(char*)ZString, (u32)Length};
+    return(Result);
+}
+
 inline string ReadFileData(const char *FilePath)
 {
     string Result = {};

@@ -74,24 +74,31 @@ void PartTwo(string Input)
     printf("Part Two: %llu\n", Result);
 }
 
+string SampleData = R""""(
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3
+)""""_s;
+
 int main(int ArgCount, char **Args)
 {
     char *Program = ShiftArgs(&ArgCount, &Args);
 
-    if(ArgCount < 1)
-    {
-        printf("Error: Input file was not provided.\n");
-        printf("\nUsage: %s <input>\n", Program);
-        return 1;
-    }
+    string Input = SampleData;
 
-    char *FileName = ShiftArgs(&ArgCount, &Args);
-
-    string Input = ReadFileData(FileName);
-    if(!Input.Data)
+    if(ArgCount > 0)
     {
-        printf("Error: Unable to read input file.\n");
-        return 1;
+        char *FileName = ShiftArgs(&ArgCount, &Args);
+
+        Input = ReadFileData(FileName);
+        if(!Input.Data)
+        {
+            printf("Error: Unable to read input file.\n");
+            return 1;
+        }
     }
 
     PartOne(Input);
