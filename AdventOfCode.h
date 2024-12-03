@@ -42,6 +42,12 @@ inline char *ShiftArgs(int *ArgCount, char ***Args)
     return(Result);
 }
 
+inline bool IsDigit(char X)
+{
+    bool Result = ('0' <= X && X <= '9');
+    return(Result);
+}
+
 template<typename T>
 struct array {
     T  *Data;
@@ -138,10 +144,9 @@ struct buffer {
 
 typedef buffer string;
 
-inline string operator ""_s(const char *ZString, size_t Length)
+inline constexpr string operator ""_s(const char *ZString, size_t Length)
 {
-    string Result = {(char*)ZString, (u32)Length};
-    return(Result);
+    return{(char*)ZString, (u32)Length};
 }
 
 inline string ReadFileData(const char *FilePath)
@@ -216,6 +221,40 @@ inline string ChopBy(string *Buffer, char Delim)
     return(Result);
 }
 
+inline bool StringsAreEqual(char *DataA, char *DataB, u32 Length)
+{
+    bool Result = true;
+
+    for(u32 Index = 0; Index < Length; Index++)
+    {
+        if(DataA[Index] != DataB[Index])
+        {
+            Result = false;
+            break;
+        }
+    }
+
+    return(Result);
+}
+
+inline bool StartsWith(string Buffer, string Prefix)
+{
+    bool Result = false;
+
+    if(Prefix.Length <= Buffer.Length)
+    {
+        Result = StringsAreEqual(Buffer.Data, Prefix.Data, Prefix.Length);
+    }
+
+    return(Result);
+}
+
+inline bool StartsWith(string Buffer, char Delim)
+{
+    bool Result = (Buffer.Length > 0 && Buffer.Data[0] == Delim);
+    return(Result);
+}
+
 inline u64 ParseU64(string Buffer)
 {
     u64 Result = 0;
@@ -229,6 +268,22 @@ inline u64 ParseU64(string Buffer)
 
         Result = Result * 10 + (Buffer.Data[Index] - '0');
     }
+
+    return(Result);
+}
+
+inline u64 ChopU64(string *Buffer)
+{
+    u64 Result = 0;
+
+    u32 Index = 0;
+    while(Index < Buffer->Length && IsDigit(Buffer->Data[Index]))
+    {
+        Result = Result * 10 + (Buffer->Data[Index] - '0');
+        Index += 1;
+    }
+
+    ChopLeft(Buffer, Index);
 
     return(Result);
 }
