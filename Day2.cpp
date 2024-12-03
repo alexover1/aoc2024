@@ -17,7 +17,7 @@ bool PairIsSafe(u64 Level, u64 NextLevel)
     return(Result);
 }
 
-// Check if a line is safe without any skipped values
+// Check if a line is safe without any skipped values.
 bool LineIsSafe(u64 *Levels, u32 LevelCount, bool& Increasing)
 {
     bool Result = true;
@@ -79,66 +79,6 @@ bool CheckLinePartOne(string Line)
         else
         {
             if(Increasing) return false;
-            Decreasing = true;
-        }
-
-        Level = NextLevel;
-    }
-
-    return true;
-}
-
-bool CheckLinePartTwo2(string Line)
-{
-    string StrLevel = ChopBy(&Line, ' ');
-    u64 Level = ParseU64(StrLevel);
-
-    bool Increasing = false;
-    bool Decreasing = false;
-    bool AlreadySkipped = false;
-
-    while(Line.Length > 0)
-    {
-        Line = TrimLeft(Line);
-        StrLevel = ChopBy(&Line, ' ');
-        u64 NextLevel = ParseU64(StrLevel);
-
-        if(!PairIsSafe(Level, NextLevel))
-        {
-            if(AlreadySkipped) return false;
-
-            AlreadySkipped = true;
-
-            // Check if we can skip the first one
-            if(!Increasing && !Decreasing)
-            {
-                Level = NextLevel;
-            }
-            continue;
-        }
-
-        if(NextLevel > Level)
-        {
-            if(Decreasing)
-            {
-                if(AlreadySkipped) return false;
-
-                AlreadySkipped = true;
-                Level = NextLevel;
-                continue;
-            }
-            Increasing = true;
-        }
-        else
-        {
-            if(Increasing)
-            {
-                if(AlreadySkipped) return false;
-
-                AlreadySkipped = true;
-                Level = NextLevel;
-                continue;
-            }
             Decreasing = true;
         }
 
