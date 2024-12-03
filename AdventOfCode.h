@@ -237,7 +237,7 @@ inline bool StringsAreEqual(char *DataA, char *DataB, u32 Length)
     return(Result);
 }
 
-inline bool StartsWith(string Buffer, string Prefix)
+inline bool HasPrefix(string Buffer, string Prefix)
 {
     bool Result = false;
 
@@ -249,9 +249,21 @@ inline bool StartsWith(string Buffer, string Prefix)
     return(Result);
 }
 
-inline bool StartsWith(string Buffer, char Delim)
+inline bool HasPrefix(string Buffer, char Delim)
 {
     bool Result = (Buffer.Length > 0 && Buffer.Data[0] == Delim);
+    return(Result);
+}
+
+inline bool ChopPrefix(string *Buffer, string Prefix)
+{
+    bool Result = HasPrefix(*Buffer, Prefix);
+
+    if(Result)
+    {
+        ChopLeft(Buffer, Prefix.Length);
+    }
+
     return(Result);
 }
 

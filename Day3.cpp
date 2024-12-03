@@ -1,75 +1,86 @@
 #include "AdventOfCode.h"
 
-bool CheckMatch(string Line, u64& X, u64& Y)
+bool CheckMatch(string& Input, u64& X, u64& Y)
 {
     string Prefix = "mul("_s;
     u32 MinimumLength = "mul(X,Y)"_s.Length;
 
-    if(Line.Length < MinimumLength || !StartsWith(Line, Prefix))
+    if(Input.Length < MinimumLength || !ChopPrefix(&Input, Prefix))
     {
         return(false);
     }
 
-    ChopLeft(&Line, Prefix.Length);
+    X = ChopU64(&Input);
 
-    X = ChopU64(&Line);
-
-    if(!StartsWith(Line, ','))
+    if(!ChopPrefix(&Input, ","_s))
     {
         return(false);
     }
-    ChopLeft(&Line, 1);
 
-    Y = ChopU64(&Line);
+    Y = ChopU64(&Input);
 
-    if(!StartsWith(Line, ')'))
+    if(!ChopPrefix(&Input, ")"_s))
     {
         return(false);
     }
-    ChopLeft(&Line, 1);
-
-    // if(StartsWith(Line, Prefix))
-    // {
-
-
-    //     ChopU64(&Line);
-    //     ChopPrefix(&Line, ")");
-
-    //     u32 Index = 0;
-    //     while(Index < Line.Length && IsDigit(Line.Data[Index]))
-    //     {
-    //         Index += 1;
-    //     }
-
-    //     if(Index > 0 && StartsWith(Line, ','))
-    //     {
-    //         Index = 0;
-    //         while(IsDigit(Line.Data[Index]))
-    //         {
-    //             Index += 1;
-    //         }
-    //     }
-    // }
 
     return(true);
 }
 
-void HandleLinePartOne(string Line, u64& Result)
+u64 SolvePartOne(string Input)
 {
-    for(u32 Index = 0; Index < Line.Length; Index++)
-    {
-        string LineSubStr = {Line.Data + Index, Line.Length - Index};
+    u64 Result = 0;
+    u64 X, Y;
 
-        u64 X, Y;
-        if(CheckMatch(LineSubStr, X, Y))
+    while(Input.Length > 0)
+    {
+        if(CheckMatch(Input, X, Y))
         {
             Result += X * Y;
         }
+        else
+        {
+            ChopLeft(&Input, 1);
+        }
     }
+
+    return(Result);
+}
+
+u64 SolvePartTwo(string Input)
+{
+    u64 Result = 0;
+    bool MulsEnabled = true;
+    u64 X, Y;
+
+    while(Input.Length > 0)
+    {
+        if(ChopPrefix(&Input, "do()"_s))
+        {
+            MulsEnabled = true;
+        }
+        else if(ChopPrefix(&Input, "don't()"_s))
+        {
+            MulsEnabled = false;
+        }
+        else
+        {
+            if(MulsEnabled && CheckMatch(Input, X, Y))
+            {
+                Result += X * Y;
+            }
+            else
+            {
+                ChopLeft(&Input, 1);
+            }
+        }
+    }
+
+    return(Result);
 }
 
 string SampleData = R"""(
-xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
+xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
 )"""_s;
 
 int main(int ArgCount, char **Args)
@@ -89,17 +100,11 @@ int main(int ArgCount, char **Args)
         }
     }
 
-    u64 PartOne = 0;
-
-    while(Input.Length > 0)
-    {
-        string Line = ChopBy(&Input, '\n');
-        if(!Line.Length) continue;
-
-        HandleLinePartOne(Line, PartOne);
-    }
+    u64 PartOne = SolvePartOne(Input);
+    u64 PartTwo = SolvePartTwo(Input);
 
     printf("Part One: %llu\n", PartOne);
+    printf("Part Two: %llu\n", PartTwo);
 
     return 0;
 }
