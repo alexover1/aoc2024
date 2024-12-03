@@ -10,11 +10,9 @@
 #define Assert assert
 #define Max(A, B) (((A) > (B)) ? (A) : (B))
 #define Min(A, B) (((A) > (B)) ? (B) : (A))
+#define Abs(X) ((X) > 0 ? (X) : -(X))
 
-template<typename T> inline const T Abs(T const & x)
-{
-    return (x < 0) ? -x : x;
-}
+#define ArrayLength(Array) (sizeof((Array))/sizeof((Array)[0]))
 
 typedef int8_t   s8;
 typedef int16_t  s16;
