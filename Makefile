@@ -1,7 +1,14 @@
 CXX      ?= clang++
-CXXFLAGS ?= -std=c++11 -Wno-writable-strings -g
+CXXFLAGS ?= -std=c++11 -Wno-writable-strings
 
-all: Day1 Day2 Day3 Day4
+OUTPUTS = Day1 Day2 Day3 Day4
 
-%: %.cpp AdventOfCode.h
+.PHONY: clean
+
+all: $(OUTPUTS)
+
+%: code/%.cpp code/AdventOfCode.h
 	$(CXX) $(CXXFLAGS) -o $@ $<
+
+clean:
+	rm -f $(OUTPUTS)
