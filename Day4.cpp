@@ -80,6 +80,26 @@ u64 Search(array<string> Lines, u32 Row, u32 Column)
     return(Result);
 }
 
+bool CheckCorners(array<string> Lines, u32 Row0, u32 Column0, u32 Row1, u32 Column1)
+{
+    bool Result = (Lines.Data[Row0].Data[Column0] == 'M' || Lines.Data[Row0].Data[Column0] == 'S') &&
+                  (Lines.Data[Row1].Data[Column1] == 'M' || Lines.Data[Row1].Data[Column1] == 'S') &&
+                  (Lines.Data[Row0].Data[Column0] != Lines.Data[Row1].Data[Column1]);
+    return(Result);
+}
+
+bool SearchStars(array<string> Lines, u32 Row, u32 Column)
+{
+    bool Result = false;
+
+    if(Row >= 1 && Row < Lines.Length-1 && Column >= 1 && Column < Lines.Data[Row].Length-1)
+    {
+        Result = CheckCorners(Lines, Row-1, Column-1, Row+1, Column+1) && CheckCorners(Lines, Row+1, Column-1, Row-1, Column+1);
+    }
+
+    return(Result);
+}
+
 int main(int ArgCount, char **Args)
 {
     string Input = SampleData;
@@ -107,20 +127,29 @@ int main(int ArgCount, char **Args)
     }
 
     u64 PartOne = 0;
+    u64 PartTwo = 0;
 
     for(u32 Row = 0; Row < Lines.Length; Row++)
     {
-        string& Line = Lines.Data[Row];
+        string Line = Lines.Data[Row];
         for(u32 Column = 0; Column < Line.Length; Column++)
         {
             if(Line.Data[Column] == 'X')
             {
                 PartOne += Search(Lines, Row, Column);
             }
+            else if(Line.Data[Column] == 'A')
+            {
+                if(SearchStars(Lines, Row, Column))
+                {
+                    PartTwo += 1;
+                }
+            }
         }
     }
 
     printf("Part One: %llu\n", PartOne);
+    printf("Part Two: %llu\n", PartTwo);
 
     return 0;
 }
