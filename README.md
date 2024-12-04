@@ -16,6 +16,6 @@ $ ./Day1 ./data/input01.txt
 If you are on Windows, run the Visual Studio Developer Console and compile a specific day using MSVC:
 
 ```bat
-$ cl /EHsc /Fe:Day1.exe Day1.cpp
+$ cl /EHsc /Fe:Day1.exe code\Day1.cpp
 $ Day1.exe
 ```
