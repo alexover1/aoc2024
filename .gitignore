@@ -4,5 +4,4 @@
 *.dSYM
 
 # Input files
-sample.txt
-input.txt
+data/*
