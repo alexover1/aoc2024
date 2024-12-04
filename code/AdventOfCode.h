@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cctype>
 #include <cstddef>
+#include <cstdint>
 #include <cstdarg>
 #include <climits>
 #include <cfloat>
