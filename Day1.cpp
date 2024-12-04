@@ -1,5 +1,14 @@
 #include "AdventOfCode.h"
 
+string SampleData = R""""(
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3
+)""""_s;
+
 void ParseInput(string Input, array<u64>& ListOne, array<u64>& ListTwo)
 {
     while(Input.Length > 0)
@@ -46,7 +55,7 @@ void PartOne(string Input)
         }
     }
 
-    printf("Part One: %llu\n", Result);
+    PrintMessage("Part One: %llu\n", Result);
 }
 
 void PartTwo(string Input)
@@ -72,31 +81,21 @@ void PartTwo(string Input)
         Result += ListOne.Data[Index] * Count;
     }
 
-    printf("Part Two: %llu\n", Result);
+    PrintMessage("Part Two: %llu\n", Result);
 }
-
-string SampleData = R""""(
-3   4
-4   3
-2   5
-1   3
-3   9
-3   3
-)""""_s;
 
 int main(int ArgCount, char **Args)
 {
     string Input = SampleData;
 
-    char *Program = ShiftArgs(&ArgCount, &Args);
-    if(ArgCount > 0)
+    if(ArgCount > 1)
     {
-        char *FileName = ShiftArgs(&ArgCount, &Args);
+        char *FileName = Args[1];
 
         Input = ReadFileData(FileName);
         if(!Input.Data)
         {
-            printf("Error: Unable to read input file.\n");
+            PrintMessage("Error: Unable to read input file.\n");
             return 1;
         }
     }

@@ -235,15 +235,14 @@ int main(int ArgCount, char **Args)
 {
     string Input = SampleData;
 
-    char *Program = ShiftArgs(&ArgCount, &Args);
-    if(ArgCount > 0)
+    if(ArgCount > 1)
     {
-        char *FileName = ShiftArgs(&ArgCount, &Args);
+        char *FileName = Args[1];
 
         Input = ReadFileData(FileName);
         if(!Input.Data)
         {
-            printf("Error: Unable to read input file.\n");
+            PrintMessage("Error: Unable to read input file.\n");
             return 1;
         }
     }
@@ -267,8 +266,8 @@ int main(int ArgCount, char **Args)
         }
     }
 
-    printf("Part One: %llu\n", PartOne);
-    printf("Part Two: %llu\n", PartTwo);
+    PrintMessage("Part One: %llu\n", PartOne);
+    PrintMessage("Part Two: %llu\n", PartTwo);
 
     return 0;
 }

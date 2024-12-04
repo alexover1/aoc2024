@@ -111,7 +111,7 @@ int main(int ArgCount, char **Args)
         Input = ReadFileData(FileName);
         if(!Input.Data)
         {
-            printf("Error: Unable to read input file.\n");
+            PrintMessage("Error: Unable to read input file.\n");
             return 1;
         }
     }
@@ -148,8 +148,8 @@ int main(int ArgCount, char **Args)
         }
     }
 
-    printf("Part One: %llu\n", PartOne);
-    printf("Part Two: %llu\n", PartTwo);
+    PrintMessage("Part One: %llu\n", PartOne);
+    PrintMessage("Part Two: %llu\n", PartTwo);
 
     return 0;
 }
