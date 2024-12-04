@@ -221,7 +221,7 @@ inline string ChopBy(string *Buffer, char Delim)
     return(Result);
 }
 
-inline bool StringsAreEqual(char *DataA, char *DataB, u32 Length)
+inline bool StringsAreEqual(const char *DataA, const char *DataB, u32 Length)
 {
     bool Result = true;
 
@@ -235,6 +235,18 @@ inline bool StringsAreEqual(char *DataA, char *DataB, u32 Length)
     }
 
     return(Result);
+}
+
+inline u32 StringLength(const char *ZString)
+{
+    u32 Length = 0;
+
+    while(ZString[Length] != '\0')
+    {
+        Length += 1;
+    }
+
+    return(Length);
 }
 
 inline bool HasPrefix(string Buffer, string Prefix)

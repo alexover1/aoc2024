@@ -1,10 +1,7 @@
-all: Day1 Day2 Day3
+CXX      ?= clang++
+CXXFLAGS ?= -std=c++11 -g
 
-Day1: Day1.cpp AdventOfCode.h
-	clang++ -std=c++11 -g -o Day1 Day1.cpp
+all: Day1 Day2 Day3 Day4
 
-Day2: Day2.cpp AdventOfCode.h
-	clang++ -std=c++11 -g -o Day2 Day2.cpp
-
-Day3: Day3.cpp AdventOfCode.h
-	clang++ -std=c++11 -g -o Day3 Day3.cpp
+%: %.cpp AdventOfCode.h
+	$(CXX) $(CXXFLAGS) -o $@ $<
