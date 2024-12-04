@@ -7,7 +7,7 @@ To build the solution for a specific day, run these commands in your terminal (f
 
 ```console
 $ make -j5
-$ ./Day1 input.txt
+$ ./Day1 ./data/input01.txt
 ```
 
 > [!NOTE]
