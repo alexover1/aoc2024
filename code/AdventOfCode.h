@@ -291,6 +291,23 @@ inline bool ChopPrefix(string *Buffer, string Prefix)
     return(Result);
 }
 
+inline u32 ParseU32(string Buffer)
+{
+    u32 Result = 0;
+
+    for(u32 Index = 0; Index < Buffer.Length; Index++)
+    {
+        if(Buffer.Data[Index] < '0' || Buffer.Data[Index] > '9')
+        {
+            break;
+        }
+
+        Result = Result * 10 + (Buffer.Data[Index] - '0');
+    }
+
+    return(Result);
+}
+
 inline u64 ParseU64(string Buffer)
 {
     u64 Result = 0;
