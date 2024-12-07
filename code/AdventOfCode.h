@@ -9,6 +9,9 @@
 #include <cassert>
 #include <cstring>
 
+#define global static
+#define local_persist static
+
 #define Assert assert
 #define Max(A, B) (((A) > (B)) ? (A) : (B))
 #define Min(A, B) (((A) > (B)) ? (B) : (A))
@@ -89,13 +92,13 @@ inline void Append(array<T>& Array, T Item)
 }
 
 template<typename T>
-inline int Find(array<T>& Array, T Item)
+inline s32 Find(array<T>& Array, T Item)
 {
     for(u32 Index = 0; Index < Array.Length; Index++)
     {
         if(Array.Data[Index] == Item)
         {
-            return (int) Index;
+            return (s32) Index;
         }
     }
     return -1;
@@ -128,6 +131,45 @@ inline void Sort(array<T>& Array)
         for(int J = InitJ; J < LastJ; J++)
         {
             if(Array.Data[J] > Array.Data[J+1])
+            {
+                Swap(Array.Data[J], Array.Data[J+1]);
+                PrevSwap = J;
+                if(InitSwap == -1)
+                {
+                    InitSwap = J;
+                }
+            }
+        }
+
+        if(PrevSwap == -1)
+        {
+            return;
+        }
+
+        InitJ = Max(InitSwap-1, 0);
+        LastJ = PrevSwap;
+    }
+}
+
+template<typename T>
+inline void SortBy(array<T>& Array, bool (*CmpFn)(T A, T B))
+{
+    if(Array.Length < 2)
+    {
+        return;
+    }
+
+    int InitJ = 0;
+    int LastJ = Array.Length - 1;
+
+    for(;;)
+    {
+        int InitSwap = -1;
+        int PrevSwap = -1;
+
+        for(int J = InitJ; J < LastJ; J++)
+        {
+            if(CmpFn(Array.Data[J], Array.Data[J+1]))
             {
                 Swap(Array.Data[J], Array.Data[J+1]);
                 PrevSwap = J;
