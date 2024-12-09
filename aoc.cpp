@@ -9,8 +9,8 @@
 #include "aoc.h"
 #include "solutions.h"
 
-// TODO: To make this work on windows we need minirent.h
-#include <dirent.h>
+#define MINIRENT_IMPLEMENTATION
+#include "minirent.h"
 
 char HelpMessage[] = R"(
 There are multiple ways you can use this tool.
