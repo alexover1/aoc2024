@@ -1,0 +1,10 @@
+:i day 1
+:i part_one 11
+:i part_two 31
+:b input 36
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3

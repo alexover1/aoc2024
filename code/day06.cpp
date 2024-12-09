@@ -1,22 +1,19 @@
-#include "AdventOfCode.h"
-
-char SampleData[] =
-"....#.....\n"
-".........#\n"
-"..........\n"
-"..#.......\n"
-".......#..\n"
-"..........\n"
-".#..^.....\n"
-"........#.\n"
-"#.........\n"
-"......#...\n";
+#include "aoc.h"
 
 struct coords
 {
-    u32 X;
-    u32 Y;
+    s32 X;
+    s32 Y;
 };
+
+inline s32 DotProduct(coords U, coords V)
+{
+    s32 X = U.X * V.X;
+    s32 Y = U.Y * V.Y;
+    s32 Result = X + Y;
+
+    return(Result);
+}
 
 enum direction
 {
@@ -26,7 +23,7 @@ enum direction
     DirectionLeft  = 3,
 };
 
-char Directions[] = "^>v<";
+internal char Directions[] = "^>v<";
 
 struct map
 {
@@ -35,15 +32,6 @@ struct map
     u32 Height;
     u32 Stride;
 };
-
-#define MapStride 130
-char MapData[MapStride*MapStride];
-
-inline char GetMap(map Map, coords Coords)
-{
-    char Result = Map.Data[Coords.Y*Map.Stride + Coords.X];
-    return(Result);
-}
 
 inline direction Rotate(direction Direction)
 {
@@ -111,34 +99,24 @@ inline bool StepAndCheckBounds(map Map, coords& Coords, direction Direction)
     return(Result);
 }
 
-int main(int ArgCount, char **Args)
+internal map Map = {};
+internal coords StartCoords = {};
+
+#define MapStride 130
+internal char MapData[MapStride*MapStride];
+internal bool Visited[MapStride*MapStride];
+
+internal void
+ParseInput(string Input)
 {
-    string Input = {SampleData, sizeof(SampleData) - 1};
-
-    if(ArgCount > 1)
-    {
-        char *FileName = Args[1];
-
-        Input = ReadFileData(FileName);
-        if(!Input.Data)
-        {
-            PrintMessage("Error: Unable to read input file.\n");
-            return 1;
-        }
-    }
-
-    map Map = {};
     Map.Data = MapData;
     Map.Stride = MapStride;
 
-    coords Coords = {};
-    direction Direction = DirectionUp;
-
     u32 Row = 0;
-
     while(Input.Length > 0)
     {
-        string Line = TrimLeft(ChopBy(&Input, '\n'));
+        string Line = ChopBy(&Input, '\n');
+        Line = TrimSpace(Line);
         if(!Line.Length) continue;
 
         if(Line.Length > Map.Width)
@@ -153,8 +131,8 @@ int main(int ArgCount, char **Args)
 
             if(Line.Data[Column] == '^')
             {
-                Coords.X = Column;
-                Coords.Y = Row;
+                StartCoords.X = Column;
+                StartCoords.Y = Row;
             }
         }
 
@@ -162,10 +140,27 @@ int main(int ArgCount, char **Args)
     }
 
     Map.Height = Row;
+}
+
+internal u64
+SolvePartOne(string Input)
+{
+    u64 Result = 0;
+
+    coords Coords = StartCoords;
+    direction Direction = DirectionUp;
+
+    for(u32 Row = 0; Row < Map.Height; Row++)
+    {
+        for(u32 Column = 0; Column < Map.Width; Column++)
+        {
+            Visited[Row*Map.Stride + Column] = false;
+        }
+    }
 
     while(true)
     {
-        Map.Data[Coords.Y*Map.Stride + Coords.X] = 'X';
+        Visited[Coords.Y*Map.Stride + Coords.X] = true;
 
         coords NextCoords = Coords;
 
@@ -184,20 +179,57 @@ int main(int ArgCount, char **Args)
         }
     }
 
-    u32 NumSteps = 0;
-
     for(u32 Row = 0; Row < Map.Height; Row++)
     {
         for(u32 Column = 0; Column < Map.Width; Column++)
         {
-            if(Map.Data[Row*Map.Stride + Column] == 'X')
+            if(Visited[Row*Map.Stride + Column])
             {
-                NumSteps += 1;
+                Result += 1;
             }
         }
     }
 
-    PrintMessage("Part One: %u\n", NumSteps);
-
-    return(0);
+    return(Result);
 }
+
+internal u64
+SolvePartTwo(string Input)
+{
+    u64 Result = 0;
+
+    coords Coords = StartCoords;
+    direction Direction = DirectionUp;
+
+    local_persist array<coords> Turns = {};
+    Turns.Length = 0;
+
+    while(true)
+    {
+        coords NextCoords = Coords;
+
+        if(StepAndCheckBounds(Map, NextCoords, Direction))
+        {
+            break;
+        }
+
+        if(Map.Data[NextCoords.Y*Map.Stride + NextCoords.X] == '#')
+        {
+            Direction = Rotate(Direction);
+            Append(Turns, Coords);
+        }
+        else
+        {
+            Coords = NextCoords;
+        }
+    }
+
+    return(Result);
+}
+
+solution Solution06 =
+{
+    ParseInput,
+    SolvePartOne,
+    SolvePartTwo,
+};

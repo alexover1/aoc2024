@@ -1,4 +1,4 @@
-#include "AdventOfCode.h"
+#include "aoc.h"
 
 bool PairIsSafe(u64 Level, u64 NextLevel)
 {
@@ -88,7 +88,7 @@ bool CheckLinePartOne(string Line)
     return true;
 }
 
-array<u64> Levels = {};
+internal array<u64> Levels = {};
 
 bool CheckLinePartTwo(string Line)
 {
@@ -209,65 +209,49 @@ bool CheckLinePartTwo(string Line)
     return(Result);
 }
 
-string SampleData = R""""(
-7 6 4 2 1
-1 2 7 8 9
-9 7 6 2 1
-1 3 2 4 5
-8 6 4 4 1
-1 3 6 7 9
-)""""_s;
-
-string EdgeCaseData = R""""(
-48 46 47 49 51 54 56
-1 1 2 3 4 5
-1 2 3 4 5 5
-5 1 2 3 4 5
-1 4 3 2 1
-1 6 7 8 9
-1 2 3 4 3
-9 8 7 6 7
-7 10 8 10 11
-29 28 27 25 26 25 22 20
-)""""_s;
-
-int main(int ArgCount, char **Args)
+internal u64
+SolvePartOne(string Input)
 {
-    string Input = SampleData;
+    u64 Result = 0;
 
-    if(ArgCount > 1)
-    {
-        char *FileName = Args[1];
-
-        Input = ReadFileData(FileName);
-        if(!Input.Data)
-        {
-            PrintMessage("Error: Unable to read input file.\n");
-            return 1;
-        }
-    }
-
-    u64 PartOne = 0;
-    u64 PartTwo = 0;
-
-    for(u32 LineNumber = 0; Input.Length > 0; LineNumber++)
+    while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
+        Line = TrimSpace(Line);
         if(!Line.Length) continue;
 
         if(CheckLinePartOne(Line))
         {
-            PartOne += 1;
-        }
-
-        if(CheckLinePartTwo(Line))
-        {
-            PartTwo += 1;
+            Result += 1;
         }
     }
 
-    PrintMessage("Part One: %llu\n", PartOne);
-    PrintMessage("Part Two: %llu\n", PartTwo);
-
-    return 0;
+    return(Result);
 }
+
+internal u64
+SolvePartTwo(string Input)
+{
+    u64 Result = 0;
+
+    while(Input.Length > 0)
+    {
+        string Line = ChopBy(&Input, '\n');
+        Line = TrimSpace(Line);
+        if(!Line.Length) continue;
+
+        if(CheckLinePartTwo(Line))
+        {
+            Result += 1;
+        }
+    }
+
+    return(Result);
+}
+
+solution Solution02 =
+{
+    0,
+    SolvePartOne,
+    SolvePartTwo,
+};

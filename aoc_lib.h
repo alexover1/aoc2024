@@ -11,6 +11,7 @@
 
 #define global static
 #define local_persist static
+#define internal static
 
 #define Assert assert
 #define Max(A, B) (((A) > (B)) ? (A) : (B))
@@ -58,6 +59,24 @@ inline char *ShiftArgs(int *ArgCount, char ***Args)
 inline bool IsDigit(char X)
 {
     bool Result = ('0' <= X && X <= '9');
+    return(Result);
+}
+
+inline bool IsSpace(char X)
+{
+    bool Result = false;
+
+    switch(X)
+    {
+        case ' ':
+        case '\t':
+        case '\n':
+        case '\r':
+        {
+            Result = true;
+        } break;
+    }
+
     return(Result);
 }
 
@@ -226,6 +245,62 @@ inline string ReadFileData(const char *FilePath)
     return(Result);
 }
 
+inline u32 StringLength(const char *ZString)
+{
+    u32 Length = 0;
+
+    while(ZString[Length] != '\0')
+    {
+        Length += 1;
+    }
+
+    return(Length);
+}
+
+inline bool StringsAreEqual(const char *DataA, const char *DataB, u32 Length)
+{
+    bool Result = true;
+
+    for(u32 Index = 0; Index < Length; Index++)
+    {
+        if(DataA[Index] != DataB[Index])
+        {
+            Result = false;
+            break;
+        }
+    }
+
+    return(Result);
+}
+
+inline bool operator==(string Left, string Right)
+{
+    bool Result = (Left.Length == Right.Length) && StringsAreEqual(Left.Data, Right.Data, Right.Length);
+    return(Result);
+}
+
+inline bool operator!=(string Left, string Right)
+{
+    bool Result = (Left.Length != Right.Length) || !StringsAreEqual(Left.Data, Right.Data, Right.Length);
+    return(Result);
+}
+
+inline bool operator==(string Left, const char *Right)
+{
+    u32 Length = StringLength(Right);
+    bool Result = (Left.Length == Length) && StringsAreEqual(Left.Data, Right, Length);
+
+    return(Result);
+}
+
+inline bool operator!=(string Left, const char *Right)
+{
+    u32 Length = StringLength(Right);
+    bool Result = (Left.Length != Length) && !StringsAreEqual(Left.Data, Right, Length);
+
+    return(Result);
+}
+
 inline string ChopLeft(string *Buffer, u32 Amount)
 {
     if(Amount > Buffer->Length)
@@ -244,11 +319,27 @@ inline string ChopLeft(string *Buffer, u32 Amount)
 inline string TrimLeft(string Buffer)
 {
     u32 Index = 0;
-    while(Index < Buffer.Length && isspace(Buffer.Data[Index]))
+    while(Index < Buffer.Length && IsSpace(Buffer.Data[Index]))
     {
         Index += 1;
     }
     return {Buffer.Data + Index, Buffer.Length - Index};
+}
+
+inline string TrimRight(string Buffer)
+{
+    u32 Index = 0;
+    while(Index < Buffer.Length && IsSpace(Buffer.Data[Buffer.Length - Index - 1]))
+    {
+        Index += 1;
+    }
+    return {Buffer.Data, Buffer.Length - Index};
+}
+
+inline string TrimSpace(string Buffer)
+{
+    Buffer = TrimRight(TrimLeft(Buffer));
+    return(Buffer);
 }
 
 inline string ChopBy(string *Buffer, char Delim)
@@ -275,32 +366,28 @@ inline string ChopBy(string *Buffer, char Delim)
     return(Result);
 }
 
-inline bool StringsAreEqual(const char *DataA, const char *DataB, u32 Length)
+inline string ChopBy(string *Buffer, string Delim)
 {
-    bool Result = true;
+    string Window = {Buffer->Data, Delim.Length};
 
-    for(u32 Index = 0; Index < Length; Index++)
+    u32 Index = 0;
+    while(Index + Delim.Length < Buffer->Length && Window != Delim)
     {
-        if(DataA[Index] != DataB[Index])
-        {
-            Result = false;
-            break;
-        }
+        Index += 1;
+        Window.Data += 1;
     }
+
+    string Result = {Buffer->Data, Index};
+
+    if(Index + Delim.Length == Buffer->Length)
+    {
+        Result.Length += Delim.Length;
+    }
+
+    Buffer->Data   += Index + Delim.Length;
+    Buffer->Length -= Index + Delim.Length;
 
     return(Result);
-}
-
-inline u32 StringLength(const char *ZString)
-{
-    u32 Length = 0;
-
-    while(ZString[Length] != '\0')
-    {
-        Length += 1;
-    }
-
-    return(Length);
 }
 
 inline bool HasPrefix(string Buffer, string Prefix)
@@ -384,11 +471,11 @@ inline u64 ChopU64(string *Buffer)
 }
 
 inline s32
-S32FromZInternal(char **AtInit)
+S32FromZInternal(const char **AtInit)
 {
     s32 Result = 0;
 
-    char *At = *AtInit;
+    const char *At = *AtInit;
     while((*At >= '0') &&
           (*At <= '9'))
     {
@@ -403,9 +490,9 @@ S32FromZInternal(char **AtInit)
 }
 
 inline s32
-S32FromZ(char *At)
+S32FromZ(const char *At)
 {
-    char *Ignored = At;
+    const char *Ignored = At;
     s32 Result = S32FromZInternal(&Ignored);
     return(Result);
 }
@@ -427,7 +514,7 @@ OutChar(format_dest *Dest, char Value)
 }
 
 inline void
-OutChars(format_dest *Dest, char *Value)
+OutChars(format_dest *Dest, const char *Value)
 {
     // NOTE(casey): Not particularly speedy, are we?  :P
     while(*Value)
@@ -440,9 +527,10 @@ OutChars(format_dest *Dest, char *Value)
 #define ReadVarArgSignedInteger(Length, ArgList) ((Length) == 8) ? va_arg(ArgList, s64) : (s64)va_arg(ArgList, s32)
 #define ReadVarArgFloat(Length, ArgList) va_arg(ArgList, f64)
 
-char DecChars[] = "0123456789";
-char LowerHexChars[] = "0123456789abcdef";
-char UpperHexChars[] = "0123456789ABCDEF";
+internal char DecChars[] = "0123456789";
+internal char LowerHexChars[] = "0123456789abcdef";
+internal char UpperHexChars[] = "0123456789ABCDEF";
+
 inline void
 U64ToASCII(format_dest *Dest, u64 Value, u32 Base, char *Digits)
 {
@@ -498,12 +586,12 @@ F64ToASCII(format_dest *Dest, f64 Value, u32 Precision)
 
 // NOTE(casey): Size returned __DOES NOT__ include the null terminator.
 inline umm
-FormatStringList(umm DestSize, char *DestInit, char *Format, va_list ArgList)
+FormatStringList(umm DestSize, char *DestInit, const char *Format, va_list ArgList)
 {
     format_dest Dest = {DestSize, DestInit};
     if(Dest.Size)
     {
-        char *At = Format;
+        const char *At = Format;
         while(At[0])
         {
             if(*At == '%')
@@ -633,7 +721,7 @@ FormatStringList(umm DestSize, char *DestInit, char *Format, va_list ArgList)
                 char TempBuffer[64];
                 char *Temp = TempBuffer;
                 format_dest TempDest = {ArrayLength(TempBuffer), Temp};
-                char *Prefix = "";
+                const char *Prefix = "";
                 b32 IsFloat = false;
 
                 switch(*At)
@@ -676,7 +764,7 @@ FormatStringList(umm DestSize, char *DestInit, char *Format, va_list ArgList)
                     {
                         // TODO(casey): Put in a fractional thing here...
                         umm Value = va_arg(ArgList, umm);
-                        char *Suffix = "b ";
+                        const char *Suffix = "b ";
                         if(Value >= Gigabytes(1))
                         {
                             Suffix = "gb";
@@ -841,7 +929,7 @@ FormatStringList(umm DestSize, char *DestInit, char *Format, va_list ArgList)
                         }
                     }
 
-                    for(char *Pre = Prefix;
+                    for(const char *Pre = Prefix;
                         *Pre && UseWidth;
                         ++Pre)
                     {
@@ -903,7 +991,7 @@ FormatStringList(umm DestSize, char *DestInit, char *Format, va_list ArgList)
 
 // TODO(casey): Eventually, make this return a string struct
 inline umm
-FormatString(umm DestSize, char *Dest, char *Format, ...)
+FormatString(umm DestSize, char *Dest, const char *Format, ...)
 {
     va_list ArgList;
 
@@ -916,7 +1004,7 @@ FormatString(umm DestSize, char *Dest, char *Format, ...)
 
 // TODO(alex): Remove the dependency on libc just for fwrite?
 inline void
-PrintMessage(char *Format, ...)
+PrintMessage(const char *Format, ...)
 {
     va_list ArgList;
 

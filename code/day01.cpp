@@ -1,16 +1,14 @@
-#include "AdventOfCode.h"
+#include "aoc.h"
 
-string SampleData = R""""(
-3   4
-4   3
-2   5
-1   3
-3   9
-3   3
-)""""_s;
+internal array<u64> ListOne = {};
+internal array<u64> ListTwo = {};
 
-void ParseInput(string Input, array<u64>& ListOne, array<u64>& ListTwo)
+internal void
+ParseInput(string Input)
 {
+    ListOne.Length = 0;
+    ListTwo.Length = 0;
+
     while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
@@ -21,23 +19,19 @@ void ParseInput(string Input, array<u64>& ListOne, array<u64>& ListTwo)
         string StrB = ChopBy(&Line, ' ');
 
         u64 A = ParseU64(StrA);
-        u64 B = ParseU64(StrB);
-
         Append(ListOne, A);
+
+        u64 B = ParseU64(StrB);
         Append(ListTwo, B);
     }
-}
-
-void PartOne(string Input)
-{
-    array<u64> ListOne = {};
-    array<u64> ListTwo = {};
-
-    ParseInput(Input, ListOne, ListTwo);
 
     Sort(ListOne);
     Sort(ListTwo);
+}
 
+internal u64
+SolvePartOne(string Input)
+{
     u64 Result = 0;
 
     for(u32 Index = 0; Index < ListOne.Length; Index++)
@@ -55,16 +49,12 @@ void PartOne(string Input)
         }
     }
 
-    PrintMessage("Part One: %llu\n", Result);
+    return(Result);
 }
 
-void PartTwo(string Input)
+internal u64
+SolvePartTwo(string Input)
 {
-    array<u64> ListOne = {};
-    array<u64> ListTwo = {};
-
-    ParseInput(Input, ListOne, ListTwo);
-
     u64 Result = 0;
 
     for(u32 Index = 0; Index < ListOne.Length; Index++)
@@ -81,27 +71,12 @@ void PartTwo(string Input)
         Result += ListOne.Data[Index] * Count;
     }
 
-    PrintMessage("Part Two: %llu\n", Result);
+    return(Result);
 }
 
-int main(int ArgCount, char **Args)
+solution Solution01 =
 {
-    string Input = SampleData;
-
-    if(ArgCount > 1)
-    {
-        char *FileName = Args[1];
-
-        Input = ReadFileData(FileName);
-        if(!Input.Data)
-        {
-            PrintMessage("Error: Unable to read input file.\n");
-            return 1;
-        }
-    }
-
-    PartOne(Input);
-    PartTwo(Input);
-
-    return 0;
-}
+    ParseInput,
+    SolvePartOne,
+    SolvePartTwo,
+};

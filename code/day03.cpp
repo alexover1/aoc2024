@@ -1,4 +1,4 @@
-#include "AdventOfCode.h"
+#include "aoc.h"
 
 bool CheckMatch(string& Input, u64& X, u64& Y)
 {
@@ -27,7 +27,8 @@ bool CheckMatch(string& Input, u64& X, u64& Y)
     return(true);
 }
 
-u64 SolvePartOne(string Input)
+internal u64
+SolvePartOne(string Input)
 {
     u64 Result = 0;
     u64 X, Y;
@@ -47,7 +48,8 @@ u64 SolvePartOne(string Input)
     return(Result);
 }
 
-u64 SolvePartTwo(string Input)
+internal u64
+SolvePartTwo(string Input)
 {
     u64 Result = 0;
     bool MulsEnabled = true;
@@ -79,31 +81,9 @@ u64 SolvePartTwo(string Input)
     return(Result);
 }
 
-string SampleData = R"""(
-xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
-)"""_s;
-
-int main(int ArgCount, char **Args)
+solution Solution03 =
 {
-    string Input = SampleData;
-
-    if(ArgCount > 1)
-    {
-        char *FileName = Args[1];
-
-        Input = ReadFileData(FileName);
-        if(!Input.Data)
-        {
-            PrintMessage("Error: Unable to read input file.\n");
-            return 1;
-        }
-    }
-
-    u64 PartOne = SolvePartOne(Input);
-    u64 PartTwo = SolvePartTwo(Input);
-
-    PrintMessage("Part One: %llu\n", PartOne);
-    PrintMessage("Part Two: %llu\n", PartTwo);
-
-    return 0;
-}
+    0,
+    SolvePartOne,
+    SolvePartTwo,
+};

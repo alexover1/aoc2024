@@ -1,6 +1,7 @@
-#include "AdventOfCode.h"
+#include "aoc.h"
 
-string SampleData = R"""(47|53
+string SampleData =
+R"(47|53
 97|13
 97|61
 97|47
@@ -28,13 +29,34 @@ string SampleData = R"""(47|53
 75,97,47,61,53
 61,13,29
 97,13,75,29,47
-)"""_s;
+)"_s;
 
 struct pair_ordering_rule
 {
     u32 First;
     u32 Last;
 };
+
+internal array<pair_ordering_rule> Rules = {};
+internal array<u32> Pages = {};
+
+internal void
+ParseInput(string Input)
+{
+    while(Input.Length > 0)
+    {
+        string Line = ChopBy(&Input, '\n');
+        if(!Line.Length) break;
+
+        pair_ordering_rule Rule = {};
+
+        Rule.First = (u32) ChopU64(&Line);
+        ChopPrefix(&Line, "|"_s);
+        Rule.Last = (u32) ChopU64(&Line);
+
+        Append(Rules, Rule);
+    }
+}
 
 bool CheckPageOrder(array<u32> Pages, array<pair_ordering_rule> Rules)
 {
@@ -69,7 +91,7 @@ SkipToEnd:
     return(Result);
 }
 
-bool RuleCompare(pair_ordering_rule A, pair_ordering_rule B)
+bool RuleCompareFn(pair_ordering_rule A, pair_ordering_rule B)
 {
     bool Result = (A.First > B.First) || (A.Last > B.Last);
     return(Result);
@@ -92,7 +114,7 @@ void SortPages(array<pair_ordering_rule>& Array)
 
         for(int J = InitJ; J < LastJ; J++)
         {
-            if(RuleCompare(Array.Data[J], Array.Data[J+1]))
+            if(RuleCompareFn(Array.Data[J], Array.Data[J+1]))
             {
                 Swap(Array.Data[J], Array.Data[J+1]);
                 PrevSwap = J;
@@ -113,7 +135,7 @@ void SortPages(array<pair_ordering_rule>& Array)
     }
 }
 
-array<pair_ordering_rule> RulesInUse = {};
+internal array<pair_ordering_rule> RulesInUse = {};
 
 bool PageCompareFn(u32 PageA, u32 PageB)
 {
@@ -166,45 +188,17 @@ void UpdatePageOrder(array<u32>& Pages, array<pair_ordering_rule> Rules)
     SortBy(Pages, PageCompareFn);
 }
 
-int main(int ArgCount, char **Args)
+internal u64
+SolvePartOne(string Input)
 {
-    string Input = SampleData;
+    u64 Result = 0;
 
-    array<pair_ordering_rule> Rules = {};
-    array<u32> Pages = {};
-
-    u32 PartOne = 0;
-    u32 PartTwo = 0;
-
-    if(ArgCount > 1)
-    {
-        char *FileName = Args[1];
-
-        Input = ReadFileData(FileName);
-        if(!Input.Data)
-        {
-            PrintMessage("Error: Unable to read input file.\n");
-            return(1);
-        }
-    }
+    ChopBy(&Input, "\n\n"_s);
 
     while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
-        if(!Line.Length) break;
-
-        pair_ordering_rule Rule = {};
-
-        Rule.First = (u32) ChopU64(&Line);
-        ChopPrefix(&Line, "|"_s);
-        Rule.Last = (u32) ChopU64(&Line);
-
-        Append(Rules, Rule);
-    }
-
-    while(Input.Length > 0)
-    {
-        string Line = ChopBy(&Input, '\n');
+        Line = TrimSpace(Line);
         if(!Line.Length) continue;
 
         while(Line.Length > 0)
@@ -219,19 +213,53 @@ int main(int ArgCount, char **Args)
 
         if(CheckPageOrder(Pages, Rules))
         {
-            PartOne += Pages.Data[MiddleIndex];
-        }
-        else
-        {
-            UpdatePageOrder(Pages, Rules);
-            PartTwo += Pages.Data[MiddleIndex];
+            Result += Pages.Data[MiddleIndex];
         }
 
         Pages.Length = 0;
     }
 
-    PrintMessage("Part One: %u\n", PartOne);
-    PrintMessage("Part Two: %u\n", PartTwo);
-
-    return(0);
+    return(Result);
 }
+
+internal u64
+SolvePartTwo(string Input)
+{
+    u64 Result = 0;
+
+    ChopBy(&Input, "\n\n"_s);
+
+    while(Input.Length > 0)
+    {
+        string Line = ChopBy(&Input, '\n');
+        Line = TrimSpace(Line);
+        if(!Line.Length) continue;
+
+        while(Line.Length > 0)
+        {
+            string Word = ChopBy(&Line, ',');
+            u32 PageNumber = ParseU32(Word);
+
+            Append(Pages, PageNumber);
+        }
+
+        u32 MiddleIndex = Pages.Length/2;
+
+        if(!CheckPageOrder(Pages, Rules))
+        {
+            UpdatePageOrder(Pages, Rules);
+            Result += Pages.Data[MiddleIndex];
+        }
+
+        Pages.Length = 0;
+    }
+
+    return(Result);
+}
+
+solution Solution05 =
+{
+    ParseInput,
+    SolvePartOne,
+    SolvePartTwo,
+};

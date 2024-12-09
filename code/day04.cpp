@@ -1,17 +1,4 @@
-#include "AdventOfCode.h"
-
-string SampleData = R"""(
-MMMSXXMASM
-MSAMXMSMSA
-AMXSXMAAMM
-MSAMASMSMX
-XMASAMXAMM
-XXAMMXXAMA
-SMSMSASXSS
-SAXAMASAAA
-MAMMMXMMMM
-MXMXAXMASX
-)"""_s;
+#include "aoc.h"
 
 bool CheckColumn(array<string> Lines, u32 Row, u32 Column, string SearchString)
 {
@@ -100,24 +87,11 @@ bool SearchStars(array<string> Lines, u32 Row, u32 Column)
     return(Result);
 }
 
-int main(int ArgCount, char **Args)
+internal array<string> Lines = {};
+
+internal void
+ParseInput(string Input)
 {
-    string Input = SampleData;
-
-    if(ArgCount > 1)
-    {
-        char *FileName = Args[1];
-
-        Input = ReadFileData(FileName);
-        if(!Input.Data)
-        {
-            PrintMessage("Error: Unable to read input file.\n");
-            return 1;
-        }
-    }
-
-    array<string> Lines = {};
-
     while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
@@ -125,9 +99,12 @@ int main(int ArgCount, char **Args)
 
         Append(Lines, Line);
     }
+}
 
-    u64 PartOne = 0;
-    u64 PartTwo = 0;
+internal u64
+SolvePartOne(string Input)
+{
+    u64 Result = 0;
 
     for(u32 Row = 0; Row < Lines.Length; Row++)
     {
@@ -136,20 +113,40 @@ int main(int ArgCount, char **Args)
         {
             if(Line.Data[Column] == 'X')
             {
-                PartOne += Search(Lines, Row, Column);
+                Result += Search(Lines, Row, Column);
             }
-            else if(Line.Data[Column] == 'A')
+        }
+    }
+
+    return(Result);
+}
+
+internal u64
+SolvePartTwo(string Input)
+{
+    u64 Result = 0;
+
+    for(u32 Row = 0; Row < Lines.Length; Row++)
+    {
+        string Line = Lines.Data[Row];
+        for(u32 Column = 0; Column < Line.Length; Column++)
+        {
+            if(Line.Data[Column] == 'A')
             {
                 if(SearchStars(Lines, Row, Column))
                 {
-                    PartTwo += 1;
+                    Result += 1;
                 }
             }
         }
     }
 
-    PrintMessage("Part One: %llu\n", PartOne);
-    PrintMessage("Part Two: %llu\n", PartTwo);
-
-    return 0;
+    return(Result);
 }
+
+solution Solution04 =
+{
+    ParseInput,
+    SolvePartOne,
+    SolvePartTwo,
+};
