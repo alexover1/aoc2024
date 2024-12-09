@@ -1,3 +1,11 @@
+/* ========================================================================
+   $File: day01.cpp $
+   $Date: 12/8/24 $
+   $Revision: $
+   $Creator: Alex Overstreet $
+   $Notice: (C) Copyright 2024 by Alex Overstreet. All Rights Reserved. $
+   ======================================================================== */
+
 #include "aoc.h"
 
 internal array<u64> ListOne = {};

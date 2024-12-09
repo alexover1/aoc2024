@@ -1,3 +1,11 @@
+/* ========================================================================
+   $File: day04.cpp $
+   $Date: 12/8/24 $
+   $Revision: $
+   $Creator: Alex Overstreet $
+   $Notice: (C) Copyright 2024 by Alex Overstreet. All Rights Reserved. $
+   ======================================================================== */
+
 #include "aoc.h"
 
 bool CheckColumn(array<string> Lines, u32 Row, u32 Column, string SearchString)

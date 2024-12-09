@@ -1,6 +1,15 @@
+/* ========================================================================
+   $File: day02.cpp $
+   $Date: 12/8/24 $
+   $Revision: $
+   $Creator: Alex Overstreet $
+   $Notice: (C) Copyright 2024 by Alex Overstreet. All Rights Reserved. $
+   ======================================================================== */
+
 #include "aoc.h"
 
-bool PairIsSafe(u64 Level, u64 NextLevel)
+internal bool
+PairIsSafe(u64 Level, u64 NextLevel)
 {
     u64 Difference;
     if(NextLevel > Level)
@@ -18,7 +27,8 @@ bool PairIsSafe(u64 Level, u64 NextLevel)
 }
 
 // Check if a line is safe without any skipped values.
-bool LineIsSafe(u64 *Levels, u32 LevelCount, bool& Increasing)
+internal bool
+LineIsSafe(u64 *Levels, u32 LevelCount, bool& Increasing)
 {
     bool Result = true;
 
@@ -51,7 +61,8 @@ bool LineIsSafe(u64 *Levels, u32 LevelCount, bool& Increasing)
     return(Result);
 }
 
-bool CheckLinePartOne(string Line)
+internal bool
+CheckLinePartOne(string Line)
 {
     string StrLevel = ChopBy(&Line, ' ');
     u64 Level = ParseU64(StrLevel);
@@ -88,15 +99,17 @@ bool CheckLinePartOne(string Line)
     return true;
 }
 
-internal array<u64> Levels = {};
-
-bool CheckLinePartTwo(string Line)
+internal bool
+CheckLinePartTwo(string Line)
 {
     bool Result = true;
 
     bool AlreadySkipped = false;
     bool Increasing = false;
     bool SetOrder = false;
+
+    local_persist array<u64> Levels = {};
+    Levels.Length = 0;
 
     while(Line.Length > 0)
     {
