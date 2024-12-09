@@ -113,6 +113,7 @@ internal coords StartCoords = {};
 
 #define MapStride 130
 internal char MapData[MapStride*MapStride];
+internal bool Visited[MapStride*MapStride];
 
 internal void
 ParseInput(string Input)
@@ -153,15 +154,14 @@ ParseInput(string Input)
 internal u64
 TraverseMap(map Map, u32 MaxSteps)
 {
-    u64 Result = 0;
+    u64 TotalSteps = 0;
 
     coords Coords = StartCoords;
     direction Direction = StartDirection;
 
-    local_persist bool Visited[MapStride*MapStride];
     FillMemory(sizeof(Visited), Visited, 0);
 
-    for(u32 Steps = 0; Steps < MaxSteps;)
+    while(TotalSteps < MaxSteps)
     {
         Visited[Coords.Y*Map.Stride + Coords.X] = true;
 
@@ -179,9 +179,19 @@ TraverseMap(map Map, u32 MaxSteps)
         else
         {
             Coords = NextCoords;
-            Steps += 1;
+            TotalSteps += 1;
         }
     }
+
+    return(TotalSteps);
+}
+
+internal u64
+SolvePartOne(string Input)
+{
+    u64 Result = 0;
+
+    TraverseMap(Map, UINT_MAX);
 
     for(u32 Row = 0; Row < Map.Height; Row++)
     {
@@ -198,13 +208,6 @@ TraverseMap(map Map, u32 MaxSteps)
 }
 
 internal u64
-SolvePartOne(string Input)
-{
-    u64 Result = TraverseMap(Map, ArrayLength(MapData));
-    return(Result);
-}
-
-internal u64
 SolvePartTwo(string Input)
 {
     u64 Result = 0;
@@ -212,27 +215,32 @@ SolvePartTwo(string Input)
     local_persist char TempData[MapStride*MapStride];
     CopyMemory(sizeof(TempData), TempData, MapData);
 
-    for(u32 Row = 0; Row < Map.Height; Row++)
+    map TempMap = Map;
+    TempMap.Data = TempData;
+
+    for(u32 Row = 0; Row < TempMap.Height; Row++)
     {
-        for(u32 Column = 0; Column < Map.Width; Column++)
+        for(u32 Column = 0; Column < TempMap.Width; Column++)
         {
+            if((Column == StartCoords.X && Row == StartCoords.Y) || MapData[Row*Map.Stride + Column] != '.')
+            {
+                continue;
+            }
+
             char Saved = TempData[Row*Map.Stride + Column];
             TempData[Row*Map.Stride + Column] = '#';
-
-            map TempMap = Map;
-            TempMap.Data = TempData;
 
             // The guard is looping if the path returned by the
             // traverse function is at least longer than the total
             // area of the map + 1.
 
-            u32 MaxSteps = ArrayLength(MapData) + 1;
-            if(TraverseMap(TempMap, MaxSteps) >= MaxSteps)
+            u32 MapArea = TempMap.Width*TempMap.Height;
+            if(TraverseMap(TempMap, MapArea + 1) >= MapArea)
             {
                 Result += 1;
             }
 
-            TempData[Row*Map.Stride + Column] = Saved;
+            TempData[Row*TempMap.Stride + Column] = Saved;
         }
     }
 

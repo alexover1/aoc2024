@@ -1,6 +1,6 @@
 :i day 6
 :i part_one 41
-:i part_two 0 6
+:i part_two 6
 :b input 110
 ....#.....
 .........#
