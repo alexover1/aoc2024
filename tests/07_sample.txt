@@ -1,4 +1,3 @@
-:i day 7
 :i part_one 3749
 :i part_two 11387
 :b input 123

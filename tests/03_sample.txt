@@ -1,4 +1,3 @@
-:i day 3
 :i part_one 161
 :i part_two 48
 :b input 73
