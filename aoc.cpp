@@ -324,9 +324,21 @@ int main(int ArgCount, char **Args)
         char *Subcommand = ShiftArgs(&ArgCount, &Args);
         if("test"_s == Subcommand || "tests"_s == Subcommand)
         {
-            if(!RunTests())
+            if(ArgCount > 0)
             {
-                Result = 1;
+                char *FileName = ShiftArgs(&ArgCount, &Args);
+
+                if(!RunTestCase(FileName))
+                {
+                    Result = 1;
+                }
+            }
+            else
+            {
+                if(!RunTests())
+                {
+                    Result = 1;
+                }
             }
         }
         if("run"_s == Subcommand)

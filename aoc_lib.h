@@ -253,6 +253,25 @@ inline string ReadFileData(const char *FilePath)
     return(Result);
 }
 
+inline void FillMemory(u32 Size, void *MemoryP, u8 Value)
+{
+    u8 *Memory = (u8 *)MemoryP;
+    for(u32 Index = 0; Index < Size; Index++)
+    {
+        Memory[Index] = Value;
+    }
+}
+
+inline void CopyMemory(u32 Size, void *DestP, void *SrcP)
+{
+    u8 *Dest = (u8 *)DestP;
+    u8 *Src = (u8 *)SrcP;
+    for(u32 Index = 0; Index < Size; Index++)
+    {
+        Dest[Index] = Src[Index];
+    }
+}
+
 inline u32 StringLength(const char *ZString)
 {
     u32 Length = 0;

@@ -31,8 +31,6 @@ enum direction
     DirectionLeft  = 3,
 };
 
-internal char Directions[] = "^>v<";
-
 struct map
 {
     char *Data;
@@ -41,7 +39,8 @@ struct map
     u32 Stride;
 };
 
-inline direction Rotate(direction Direction)
+internal direction
+Rotate(direction Direction)
 {
     int Value = (int)Direction;
     direction Result = (direction) ((Value + 1) % 4);
@@ -49,7 +48,8 @@ inline direction Rotate(direction Direction)
     return(Result);
 }
 
-inline bool StepAndCheckBounds(map Map, coords& Coords, direction Direction)
+internal bool
+StepAndCheckBounds(map Map, coords& Coords, direction Direction)
 {
     bool Result = false;
 
@@ -109,10 +109,10 @@ inline bool StepAndCheckBounds(map Map, coords& Coords, direction Direction)
 
 internal map Map = {};
 internal coords StartCoords = {};
+#define StartDirection DirectionUp
 
 #define MapStride 130
 internal char MapData[MapStride*MapStride];
-internal bool Visited[MapStride*MapStride];
 
 internal void
 ParseInput(string Input)
@@ -151,22 +151,17 @@ ParseInput(string Input)
 }
 
 internal u64
-SolvePartOne(string Input)
+TraverseMap(map Map, u32 MaxSteps)
 {
     u64 Result = 0;
 
     coords Coords = StartCoords;
-    direction Direction = DirectionUp;
+    direction Direction = StartDirection;
 
-    for(u32 Row = 0; Row < Map.Height; Row++)
-    {
-        for(u32 Column = 0; Column < Map.Width; Column++)
-        {
-            Visited[Row*Map.Stride + Column] = false;
-        }
-    }
+    local_persist bool Visited[MapStride*MapStride];
+    FillMemory(sizeof(Visited), Visited, 0);
 
-    while(true)
+    for(u32 Steps = 0; Steps < MaxSteps;)
     {
         Visited[Coords.Y*Map.Stride + Coords.X] = true;
 
@@ -184,6 +179,7 @@ SolvePartOne(string Input)
         else
         {
             Coords = NextCoords;
+            Steps += 1;
         }
     }
 
@@ -202,33 +198,41 @@ SolvePartOne(string Input)
 }
 
 internal u64
+SolvePartOne(string Input)
+{
+    u64 Result = TraverseMap(Map, ArrayLength(MapData));
+    return(Result);
+}
+
+internal u64
 SolvePartTwo(string Input)
 {
     u64 Result = 0;
 
-    coords Coords = StartCoords;
-    direction Direction = DirectionUp;
+    local_persist char TempData[MapStride*MapStride];
+    CopyMemory(sizeof(TempData), TempData, MapData);
 
-    local_persist array<coords> Turns = {};
-    Turns.Length = 0;
-
-    while(true)
+    for(u32 Row = 0; Row < Map.Height; Row++)
     {
-        coords NextCoords = Coords;
+        for(u32 Column = 0; Column < Map.Width; Column++)
+        {
+            char Saved = TempData[Row*Map.Stride + Column];
+            TempData[Row*Map.Stride + Column] = '#';
 
-        if(StepAndCheckBounds(Map, NextCoords, Direction))
-        {
-            break;
-        }
+            map TempMap = Map;
+            TempMap.Data = TempData;
 
-        if(Map.Data[NextCoords.Y*Map.Stride + NextCoords.X] == '#')
-        {
-            Direction = Rotate(Direction);
-            Append(Turns, Coords);
-        }
-        else
-        {
-            Coords = NextCoords;
+            // The guard is looping if the path returned by the
+            // traverse function is at least longer than the total
+            // area of the map + 1.
+
+            u32 MaxSteps = ArrayLength(MapData) + 1;
+            if(TraverseMap(TempMap, MaxSteps) >= MaxSteps)
+            {
+                Result += 1;
+            }
+
+            TempData[Row*Map.Stride + Column] = Saved;
         }
     }
 
