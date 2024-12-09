@@ -64,12 +64,23 @@ int main(int argc, char **argv)
     da_append(&file_paths, "aoc.cpp");
     da_append_many(&file_paths, header_paths, ARRAY_LEN(header_paths));
 
-    if (needs_rebuild("./aoc", file_paths.items, file_paths.count)) {
+    const char *binary_path = "./aoc";
+
+    if (needs_rebuild(binary_path, file_paths.items, file_paths.count)) {
         cmd_append(&cmd, "clang++", "-std=c++11");
-        cmd_append(&cmd, "aoc.cpp", "-o", "./aoc");
+        cmd_append(&cmd, "aoc.cpp", "-o", binary_path);
         da_append_many(&cmd, file_paths.items, object_files_count);
 
         _(cmd_run_sync_and_reset(&cmd));
+    }
+
+    if (argc > 1) {
+        if (strcmp(argv[1], "run") == 0) {
+            cmd_append(&cmd, binary_path);
+            da_append_many(&cmd, argv + 2, argc - 2);
+
+            _(cmd_run_sync_and_reset(&cmd));
+        }
     }
 
     return 0;
