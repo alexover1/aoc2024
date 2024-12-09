@@ -1,7 +1,15 @@
+.DS_Store
+
 # Output files
 *.exe
 *.pdb
 *.dSYM
+*.old
+
+# Build system
+nob
+aoc
+.build
 
 # Input files
 data/*
