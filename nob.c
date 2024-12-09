@@ -10,9 +10,9 @@
 #define NOB_STRIP_PREFIX
 #include "nob.h"
 
-#define _(x) do { if(!(x)) return(1); } while(0)
+#include "day.h"
 
-#define DAYS_COUNT 7
+#define _(x) do { if(!(x)) return(1); } while(0)
 
 int main(int argc, char **argv)
 {
@@ -25,13 +25,13 @@ int main(int argc, char **argv)
     String_Builder sb = {0};
     File_Paths file_paths = {0};
 
-    for (size_t i = 0; i < DAYS_COUNT; i += 1) {
+    for (size_t i = 0; i < DAY; i += 1) {
         da_append(&file_paths, temp_sprintf(".build/day%02zu.o", i + 1));
     }
 
     const char *header_paths[] = { "aoc.h", "aoc_lib.h" };
 
-    for (size_t i = 0; i < DAYS_COUNT; i += 1) {
+    for (size_t i = 0; i < DAY; i += 1) {
         const char *input_path = temp_sprintf("code/day%02zu.cpp", i + 1);
         const char *output_path = file_paths.items[i];
 
@@ -49,11 +49,11 @@ int main(int argc, char **argv)
     _(procs_wait_and_reset(&procs));
 
     sb_append_cstr(&sb, "#pragma once\n\n");
-    for (size_t i = 0; i < DAYS_COUNT; i += 1) {
+    for (size_t i = 0; i < DAY; i += 1) {
         sb_append_cstr(&sb, temp_sprintf("extern solution Solution%02zu;\n", i + 1));
     }
     sb_append_cstr(&sb, "\ninternal solution Solutions[] =\n{\n");
-    for (size_t i = 0; i < DAYS_COUNT; i += 1) {
+    for (size_t i = 0; i < DAY; i += 1) {
         sb_append_cstr(&sb, temp_sprintf("    Solution%02zu,\n", i + 1));
     }
     sb_append_cstr(&sb, "};\n");

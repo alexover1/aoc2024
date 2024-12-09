@@ -69,6 +69,12 @@ inline bool IsDigit(char X)
     return(Result);
 }
 
+inline bool IsAlpha(char X)
+{
+    bool Result = ('a' <= X && X <= 'z') || ('A' <= X && X <= 'Z');
+    return(Result);
+}
+
 inline bool IsSpace(char X)
 {
     bool Result = false;
