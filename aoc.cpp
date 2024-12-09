@@ -67,19 +67,29 @@ ReadBlobField(string Line, string& Contents, string& Name)
 }
 
 internal bool
-RunTestCase(const char *FileName)
+RunTestCase(const char *FileName, u64 DayNumber)
 {
     bool Result = true;
+    test_case TestCase = {};
 
+    if(DayNumber == 0 || DayNumber > ArrayLength(Solutions))
+    {
+        PrintMessage("[ERROR] Invalid day number %lu for test file '%s'\n", DayNumber, FileName);
+        Result = false;
+        return(Result);
+    }
+
+    //
+    // TODO: Make ReadFileData return just a pointer (so we can use mmap()).
+    // char *FileData = ReadFileData(FileName);
+    //
     string Contents = ReadFileData(FileName);
     if(!Contents.Data)
     {
         PrintMessage("[ERROR] Could not read the file '%s'\n", FileName);
-        return(false);
+        Result = false;
+        return(Result);
     }
-
-    test_case TestCase = {};
-    u64 DayNumber = 0;
 
     string Input = Contents;
 
@@ -92,10 +102,6 @@ RunTestCase(const char *FileName)
             string ValueName;
             u64 Value = ReadIntField(Line, ValueName);
 
-            if(ValueName == "day")
-            {
-                DayNumber = Value;
-            }
             if(ValueName == "part")
             {
                 TestCase.PartOne = Value;
@@ -124,40 +130,33 @@ RunTestCase(const char *FileName)
 
     PrintMessage("[INFO] Running %s\n", FileName);
 
-    if(DayNumber == 0 || DayNumber > ArrayLength(Solutions))
+    solution& Solution = Solutions[DayNumber-1];
+
+    if(Solution.ParseFn)
     {
-        PrintMessage("[ERROR] Day number '%lu' is not valid\n", DayNumber);
+        Solution.ParseFn(TestCase.Input);
     }
-    else
+
+    u64 PartOne = Solution.PartOneFn(TestCase.Input);
+    if(PartOne != TestCase.PartOne)
     {
-        solution& Solution = Solutions[DayNumber-1];
+        PrintMessage("[ERROR] Part one failed\n");
+        PrintMessage("  Expected:\n");
+        PrintMessage("    %lu\n", TestCase.PartOne);
+        PrintMessage("  Actual:\n");
+        PrintMessage("    %lu\n", PartOne);
+        Result = false;
+    }
 
-        if(Solution.ParseFn)
-        {
-            Solution.ParseFn(TestCase.Input);
-        }
-
-        u64 PartOne = Solution.PartOneFn(TestCase.Input);
-        if(PartOne != TestCase.PartOne)
-        {
-            PrintMessage("[ERROR] Part one failed\n");
-            PrintMessage("  Expected:\n");
-            PrintMessage("    %lu\n", TestCase.PartOne);
-            PrintMessage("  Actual:\n");
-            PrintMessage("    %lu\n", PartOne);
-            Result = false;
-        }
-
-        u64 PartTwo = Solution.PartTwoFn(TestCase.Input);
-        if(PartTwo != TestCase.PartTwo)
-        {
-            PrintMessage("[ERROR] Part two failed\n");
-            PrintMessage("  Expected:\n");
-            PrintMessage("    %lu\n", TestCase.PartTwo);
-            PrintMessage("  Actual:\n");
-            PrintMessage("    %lu\n", PartTwo);
-            Result = false;
-        }
+    u64 PartTwo = Solution.PartTwoFn(TestCase.Input);
+    if(PartTwo != TestCase.PartTwo)
+    {
+        PrintMessage("[ERROR] Part two failed\n");
+        PrintMessage("  Expected:\n");
+        PrintMessage("    %lu\n", TestCase.PartTwo);
+        PrintMessage("  Actual:\n");
+        PrintMessage("    %lu\n", PartTwo);
+        Result = false;
     }
 
     delete[] Contents.Data;
@@ -183,11 +182,20 @@ RunTests()
 
             if(*FileName != '.')
             {
-                FormatString(sizeof(PathBuffer), PathBuffer, "%s/%s", TestsDirectory, FileName);
-
-                if(!RunTestCase(PathBuffer))
+                string ShortPath = {FileName, StringLength(FileName)};
+                u64 DayNumber = ChopU64(&ShortPath);
+                if(DayNumber > 0 && DayNumber <= ArrayLength(Solutions))
                 {
-                    Result = false;
+                    FormatString(sizeof(PathBuffer), PathBuffer, "%s/%s", TestsDirectory, FileName);
+
+                    if(!RunTestCase(PathBuffer, DayNumber))
+                    {
+                        Result = false;
+                    }
+                }
+                else
+                {
+                    PrintMessage("[WARNING] Ignorning test cases with invalid day number %lu '%s'\n", DayNumber, FileName);
                 }
             }
 
@@ -328,7 +336,11 @@ int main(int ArgCount, char **Args)
             {
                 char *FileName = ShiftArgs(&ArgCount, &Args);
 
-                if(!RunTestCase(FileName))
+                string Path = {FileName, StringLength(FileName)};
+                Path = PathFileName(Path);
+                u64 DayNumber = ChopU64(&Path);
+
+                if(!RunTestCase(FileName, DayNumber))
                 {
                     Result = 1;
                 }

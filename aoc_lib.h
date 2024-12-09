@@ -51,7 +51,8 @@ typedef double f64;
 typedef uintptr_t umm;
 typedef intptr_t  smm;
 
-inline char *ShiftArgs(int *ArgCount, char ***Args)
+internal char *
+ShiftArgs(int *ArgCount, char ***Args)
 {
     Assert(*ArgCount > 0);
 
@@ -63,19 +64,22 @@ inline char *ShiftArgs(int *ArgCount, char ***Args)
     return(Result);
 }
 
-inline bool IsDigit(char X)
+internal bool
+IsDigit(char X)
 {
     bool Result = ('0' <= X && X <= '9');
     return(Result);
 }
 
-inline bool IsAlpha(char X)
+internal bool
+IsAlpha(char X)
 {
     bool Result = ('a' <= X && X <= 'z') || ('A' <= X && X <= 'Z');
     return(Result);
 }
 
-inline bool IsSpace(char X)
+internal bool
+IsSpace(char X)
 {
     bool Result = false;
 
@@ -102,7 +106,8 @@ struct array
 };
 
 template<typename T>
-inline void CheckSpace(array<T>& Array, u32 Amount)
+internal void
+CheckSpace(array<T>& Array, u32 Amount)
 {
     if(Array.Length + Amount > Array.Allocated)
     {
@@ -116,7 +121,8 @@ inline void CheckSpace(array<T>& Array, u32 Amount)
 }
 
 template<typename T>
-inline void Append(array<T>& Array, const T& Item)
+internal void
+Append(array<T>& Array, const T& Item)
 {
     CheckSpace(Array, 1);
     Array.Data[Array.Length] = Item;
@@ -124,7 +130,8 @@ inline void Append(array<T>& Array, const T& Item)
 }
 
 template<typename T>
-inline s32 Find(array<T>& Array, T Item)
+internal s32
+Find(array<T>& Array, T Item)
 {
     for(u32 Index = 0; Index < Array.Length; Index++)
     {
@@ -137,7 +144,8 @@ inline s32 Find(array<T>& Array, T Item)
 }
 
 template<typename T>
-inline void Swap(T& a, T& b)
+internal void
+Swap(T& a, T& b)
 {
     T t = a;
     a = b;
@@ -145,7 +153,8 @@ inline void Swap(T& a, T& b)
 }
 
 template<typename T>
-inline void Sort(array<T>& Array)
+internal
+void Sort(array<T>& Array)
 {
     if(Array.Length < 2)
     {
@@ -184,7 +193,8 @@ inline void Sort(array<T>& Array)
 }
 
 template<typename T>
-inline void SortBy(array<T>& Array, bool (*CmpFn)(T A, T B))
+internal
+void SortBy(array<T>& Array, bool (*CmpFn)(T A, T B))
 {
     if(Array.Length < 2)
     {
@@ -230,12 +240,14 @@ struct buffer
 
 typedef buffer string;
 
-inline constexpr string operator ""_s(const char *ZString, size_t Length)
+inline constexpr string
+operator ""_s(const char *ZString, size_t Length)
 {
     return{(char*)ZString, (u32)Length};
 }
 
-inline string ReadFileData(const char *FilePath)
+internal string
+ReadFileData(const char *FilePath)
 {
     string Result = {};
 
@@ -258,7 +270,8 @@ inline string ReadFileData(const char *FilePath)
     return(Result);
 }
 
-inline void FillMemory(u32 Size, void *MemoryP, u8 Value)
+internal void
+FillMemory(u32 Size, void *MemoryP, u8 Value)
 {
     u8 *Memory = (u8 *)MemoryP;
     for(u32 Index = 0; Index < Size; Index++)
@@ -267,7 +280,8 @@ inline void FillMemory(u32 Size, void *MemoryP, u8 Value)
     }
 }
 
-inline void CopyMemory(u32 Size, void *DestP, void *SrcP)
+internal void
+CopyMemory(u32 Size, void *DestP, void *SrcP)
 {
     u8 *Dest = (u8 *)DestP;
     u8 *Src = (u8 *)SrcP;
@@ -277,19 +291,19 @@ inline void CopyMemory(u32 Size, void *DestP, void *SrcP)
     }
 }
 
-inline u32 StringLength(const char *ZString)
+internal u32
+StringLength(const char *ZString)
 {
     u32 Length = 0;
-
-    while(ZString[Length] != '\0')
+    while(ZString[Length])
     {
         Length += 1;
     }
-
     return(Length);
 }
 
-inline bool StringsAreEqual(const char *DataA, const char *DataB, u32 Length)
+internal bool
+StringsAreEqual(const char *DataA, const char *DataB, u32 Length)
 {
     bool Result = true;
 
@@ -305,19 +319,22 @@ inline bool StringsAreEqual(const char *DataA, const char *DataB, u32 Length)
     return(Result);
 }
 
-inline bool operator==(string Left, string Right)
+internal bool
+operator==(string Left, string Right)
 {
     bool Result = (Left.Length == Right.Length) && StringsAreEqual(Left.Data, Right.Data, Right.Length);
     return(Result);
 }
 
-inline bool operator!=(string Left, string Right)
+internal bool
+operator!=(string Left, string Right)
 {
     bool Result = (Left.Length != Right.Length) || !StringsAreEqual(Left.Data, Right.Data, Right.Length);
     return(Result);
 }
 
-inline bool operator==(string Left, const char *Right)
+internal bool
+operator==(string Left, const char *Right)
 {
     u32 Length = StringLength(Right);
     bool Result = (Left.Length == Length) && StringsAreEqual(Left.Data, Right, Length);
@@ -325,7 +342,8 @@ inline bool operator==(string Left, const char *Right)
     return(Result);
 }
 
-inline bool operator!=(string Left, const char *Right)
+internal bool
+operator!=(string Left, const char *Right)
 {
     u32 Length = StringLength(Right);
     bool Result = (Left.Length != Length) && !StringsAreEqual(Left.Data, Right, Length);
@@ -333,7 +351,8 @@ inline bool operator!=(string Left, const char *Right)
     return(Result);
 }
 
-inline string ChopLeft(string *Buffer, u32 Amount)
+internal string
+ChopLeft(string *Buffer, u32 Amount)
 {
     if(Amount > Buffer->Length)
     {
@@ -348,7 +367,23 @@ inline string ChopLeft(string *Buffer, u32 Amount)
     return(Result);
 }
 
-inline string TrimLeft(string Buffer)
+internal string
+ChopRight(string *Buffer, u32 Amount)
+{
+    if(Amount > Buffer->Length)
+    {
+        Amount = Buffer->Length;
+    }
+
+    string Result = {Buffer->Data + Buffer->Length - Amount, Amount};
+
+    Buffer->Length -= Amount;
+
+    return(Result);
+}
+
+internal string
+TrimLeft(string Buffer)
 {
     u32 Index = 0;
     while(Index < Buffer.Length && IsSpace(Buffer.Data[Index]))
@@ -358,7 +393,8 @@ inline string TrimLeft(string Buffer)
     return {Buffer.Data + Index, Buffer.Length - Index};
 }
 
-inline string TrimRight(string Buffer)
+internal string
+TrimRight(string Buffer)
 {
     u32 Index = 0;
     while(Index < Buffer.Length && IsSpace(Buffer.Data[Buffer.Length - Index - 1]))
@@ -368,13 +404,15 @@ inline string TrimRight(string Buffer)
     return {Buffer.Data, Buffer.Length - Index};
 }
 
-inline string TrimSpace(string Buffer)
+internal string
+TrimSpace(string Buffer)
 {
     Buffer = TrimRight(TrimLeft(Buffer));
     return(Buffer);
 }
 
-inline string ChopBy(string *Buffer, char Delim)
+internal string
+ChopBy(string *Buffer, char Delim)
 {
     u32 Index = 0;
     while(Index < Buffer->Length && Buffer->Data[Index] != Delim)
@@ -398,7 +436,8 @@ inline string ChopBy(string *Buffer, char Delim)
     return(Result);
 }
 
-inline string ChopBy(string *Buffer, string Delim)
+internal string
+ChopBy(string *Buffer, string Delim)
 {
     string Window = {Buffer->Data, Delim.Length};
 
@@ -422,7 +461,8 @@ inline string ChopBy(string *Buffer, string Delim)
     return(Result);
 }
 
-inline bool HasPrefix(string Buffer, string Prefix)
+internal bool
+HasPrefix(string Buffer, string Prefix)
 {
     bool Result = false;
 
@@ -434,13 +474,15 @@ inline bool HasPrefix(string Buffer, string Prefix)
     return(Result);
 }
 
-inline bool HasPrefix(string Buffer, char Delim)
+internal bool
+HasPrefix(string Buffer, char Delim)
 {
     bool Result = (Buffer.Length > 0 && Buffer.Data[0] == Delim);
     return(Result);
 }
 
-inline bool ChopPrefix(string *Buffer, string Prefix)
+internal bool
+ChopPrefix(string *Buffer, string Prefix)
 {
     bool Result = HasPrefix(*Buffer, Prefix);
 
@@ -452,7 +494,8 @@ inline bool ChopPrefix(string *Buffer, string Prefix)
     return(Result);
 }
 
-inline u32 ParseU32(string Buffer)
+internal u32
+ParseU32(string Buffer)
 {
     u32 Result = 0;
 
@@ -469,7 +512,8 @@ inline u32 ParseU32(string Buffer)
     return(Result);
 }
 
-inline u64 ParseU64(string Buffer)
+internal u64
+ParseU64(string Buffer)
 {
     u64 Result = 0;
 
@@ -486,7 +530,8 @@ inline u64 ParseU64(string Buffer)
     return(Result);
 }
 
-inline u64 ChopU64(string *Buffer)
+internal u64
+ChopU64(string *Buffer)
 {
     u64 Result = 0;
 
@@ -502,7 +547,25 @@ inline u64 ChopU64(string *Buffer)
     return(Result);
 }
 
-inline s32
+internal string
+PathFileName(string Path)
+{
+    u32 Index = 0;
+    while(Index < Path.Length)
+    {
+        // TODO: This doesn't work on Windows! Handle backslashes and drive letters.
+        if(Path.Data[Path.Length - Index - 1] == '/')
+        {
+            break;
+        }
+        Index += 1;
+    }
+
+    string Result = ChopRight(&Path, Index);
+    return(Result);
+}
+
+internal s32
 S32FromZInternal(const char **AtInit)
 {
     s32 Result = 0;
@@ -521,7 +584,7 @@ S32FromZInternal(const char **AtInit)
     return(Result);
 }
 
-inline s32
+internal s32
 S32FromZ(const char *At)
 {
     const char *Ignored = At;
@@ -535,7 +598,7 @@ struct format_dest
     char *At;
 };
 
-inline void
+internal void
 OutChar(format_dest *Dest, char Value)
 {
     if(Dest->Size)
@@ -545,7 +608,7 @@ OutChar(format_dest *Dest, char Value)
     }
 }
 
-inline void
+internal void
 OutChars(format_dest *Dest, const char *Value)
 {
     // NOTE(casey): Not particularly speedy, are we?  :P
@@ -563,7 +626,7 @@ internal char DecChars[] = "0123456789";
 internal char LowerHexChars[] = "0123456789abcdef";
 internal char UpperHexChars[] = "0123456789ABCDEF";
 
-inline void
+internal void
 U64ToASCII(format_dest *Dest, u64 Value, u32 Base, char *Digits)
 {
     Assert(Base != 0);
@@ -589,7 +652,7 @@ U64ToASCII(format_dest *Dest, u64 Value, u32 Base, char *Digits)
     }
 }
 
-inline void
+internal void
 F64ToASCII(format_dest *Dest, f64 Value, u32 Precision)
 {
     if(Value < 0)
@@ -617,7 +680,7 @@ F64ToASCII(format_dest *Dest, f64 Value, u32 Precision)
 }
 
 // NOTE(casey): Size returned __DOES NOT__ include the null terminator.
-inline umm
+internal umm
 FormatStringList(umm DestSize, char *DestInit, const char *Format, va_list ArgList)
 {
     format_dest Dest = {DestSize, DestInit};
@@ -1022,7 +1085,7 @@ FormatStringList(umm DestSize, char *DestInit, const char *Format, va_list ArgLi
 }
 
 // TODO(casey): Eventually, make this return a string struct
-inline umm
+internal umm
 FormatString(umm DestSize, char *Dest, const char *Format, ...)
 {
     va_list ArgList;
@@ -1035,7 +1098,7 @@ FormatString(umm DestSize, char *Dest, const char *Format, ...)
 }
 
 // TODO(alex): Remove the dependency on libc just for fwrite?
-inline void
+internal void
 PrintMessage(const char *Format, ...)
 {
     va_list ArgList;
