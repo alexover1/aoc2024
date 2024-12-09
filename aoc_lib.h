@@ -17,7 +17,6 @@
 #include <cassert>
 #include <cstring>
 
-#define global static
 #define local_persist static
 #define internal static
 
@@ -111,7 +110,7 @@ inline void CheckSpace(array<T>& Array, u32 Amount)
 }
 
 template<typename T>
-inline void Append(array<T>& Array, T Item)
+inline void Append(array<T>& Array, const T& Item)
 {
     CheckSpace(Array, 1);
     Array.Data[Array.Length] = Item;
