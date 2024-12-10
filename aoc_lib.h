@@ -380,6 +380,46 @@ Swap(T& a, T& b)
 
 template<typename T>
 internal
+void Sort(T *Items, u32 Size)
+{
+    if(Size < 2)
+    {
+        return;
+    }
+
+    int InitJ = 0;
+    int LastJ = Size - 1;
+
+    for(;;)
+    {
+        int InitSwap = -1;
+        int PrevSwap = -1;
+
+        for(int J = InitJ; J < LastJ; J++)
+        {
+            if(Items[J] > Items[J+1])
+            {
+                Swap(Items[J], Items[J+1]);
+                PrevSwap = J;
+                if(InitSwap == -1)
+                {
+                    InitSwap = J;
+                }
+            }
+        }
+
+        if(PrevSwap == -1)
+        {
+            return;
+        }
+
+        InitJ = Max(InitSwap-1, 0);
+        LastJ = PrevSwap;
+    }
+}
+
+template<typename T>
+internal
 void Sort(array<T>& Array)
 {
     if(Array.Length < 2)

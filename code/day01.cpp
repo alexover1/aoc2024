@@ -8,23 +8,24 @@
 
 #include "aoc.h"
 
+#define MaxItems 1000
+
 internal void
-ParseInput(string Input, array<u64>& ListOne, array<u64>& ListTwo)
+ParseInput(string Input, u64 *Left, u64 *Right, u32& Size)
 {
     while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
+        Line = TrimSpace(Line);
         if(!Line.Length) continue;
 
-        string StrA = ChopBy(&Line, ' ');
+        Assert(Size < MaxItems);
+
+        Left[Size] = ChopU64(&Line);
         Line = TrimLeft(Line);
-        string StrB = ChopBy(&Line, ' ');
 
-        u64 A = ParseU64(StrA);
-        Append(ListOne, A);
-
-        u64 B = ParseU64(StrB);
-        Append(ListTwo, B);
+        Right[Size] = ChopU64(&Line);
+        Size++;
     }
 }
 
@@ -33,18 +34,19 @@ SolvePartOne(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
-    array<u64> ListOne = {};
-    array<u64> ListTwo = {};
+    u64 *Left  = (u64 *) ArenaAlloc(Arena, sizeof(u64) * MaxItems);
+    u64 *Right = (u64 *) ArenaAlloc(Arena, sizeof(u64) * MaxItems);
+    u32  Size  = 0;
 
-    ParseInput(Input, ListOne, ListTwo);
+    ParseInput(Input, Left, Right, Size);
 
-    Sort(ListOne);
-    Sort(ListTwo);
+    Sort(Left, Size);
+    Sort(Right, Size);
 
-    for(u32 Index = 0; Index < ListOne.Length; Index++)
+    for(u32 Index = 0; Index < Size; Index++)
     {
-        u32 X = ListOne.Data[Index];
-        u32 Y = ListTwo.Data[Index];
+        u32 X = Left[Index];
+        u32 Y = Right[Index];
 
         if(X > Y)
         {
@@ -56,10 +58,6 @@ SolvePartOne(memory_arena *Arena, string Input)
         }
     }
 
-    // TODO: Use the Arena for allocation!
-    delete[] ListOne.Data;
-    delete[] ListTwo.Data;
-
     return(Result);
 }
 
@@ -68,28 +66,25 @@ SolvePartTwo(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
-    array<u64> ListOne = {};
-    array<u64> ListTwo = {};
+    u64 *Left  = (u64 *) ArenaAlloc(Arena, sizeof(u64) * MaxItems);
+    u64 *Right = (u64 *) ArenaAlloc(Arena, sizeof(u64) * MaxItems);
+    u32  Size  = 0;
 
-    ParseInput(Input, ListOne, ListTwo);
+    ParseInput(Input, Left, Right, Size);
 
-    for(u32 Index = 0; Index < ListOne.Length; Index++)
+    for(u32 Index = 0; Index < Size; Index++)
     {
         u32 Count = 0;
-        for(u32 OtherIndex = 0; OtherIndex < ListTwo.Length; OtherIndex++)
+        for(u32 OtherIndex = 0; OtherIndex < Size; OtherIndex++)
         {
-            if(ListOne.Data[Index] == ListTwo.Data[OtherIndex])
+            if(Left[Index] == Right[OtherIndex])
             {
                 Count += 1;
             }
         }
 
-        Result += ListOne.Data[Index] * Count;
+        Result += Left[Index] * Count;
     }
-
-    // TODO: Use the Arena for allocation!
-    delete[] ListOne.Data;
-    delete[] ListTwo.Data;
 
     return(Result);
 }
