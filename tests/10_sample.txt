@@ -1,0 +1,7 @@
+:i part_one 1
+:i part_two 16
+:b input 20
+0123
+1234
+8765
+9876
