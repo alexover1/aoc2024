@@ -81,13 +81,17 @@ defer:
     return result;
 }
 
-bool save_next_day_header(const char *filename, size_t day)
+bool save_next_day_header(const char *file_path, size_t day)
 {
+    bool result = true;
     String_Builder sb = {0};
 
     sb_append_cstr(&sb, temp_sprintf("#define DAY %zu\n", day));
-    bool result = write_entire_file(filename, sb.items, sb.count);
+    if (!write_entire_file(file_path, sb.items, sb.count)) return_defer(false);
 
+    nob_log(NOB_INFO, "Updated %s", file_path);
+
+defer:
     sb_free(sb);
     return result;
 }
@@ -128,7 +132,11 @@ bool save_next_day_template(size_t day)
     sb_append_cstr(&sb, temp_sprintf("\nsolution Solution%02zu =\n", day));
     sb_append_cstr(&sb, "{\n    SolvePartOne,\n    SolvePartTwo,\n};\n");
 
-    if (!write_entire_file(temp_sprintf("code/day%02zu.cpp", day), sb.items, sb.count)) return_defer(false);
+    const char *file_path = temp_sprintf("code/day%02zu.cpp", day);
+
+    if (!write_entire_file(file_path, sb.items, sb.count)) return_defer(false);
+
+    nob_log(NOB_INFO, "Created %s", file_path);
 
 defer:
     sb_free(sb);
@@ -145,6 +153,7 @@ int main(int argc, char **argv)
 
     if (argc > 0 && strcmp(*argv, "next_day") == 0) {
         size_t day = DAY + 1;
+
         if (!save_next_day_header("day.h", day)) return_defer(1);
         if (!save_next_day_template(day)) return_defer(1);
     } else {
