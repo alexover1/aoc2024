@@ -14,6 +14,12 @@ struct coords
     s32 Y;
 };
 
+struct map
+{
+    u32 Width;
+    u32 Height;
+};
+
 inline coords
 operator+(coords Left, coords Right)
 {
@@ -39,19 +45,11 @@ operator-(coords Left, coords Right)
 #define MapStride 50
 internal bool Antinodes[MapStride*MapStride];
 internal array<coords> FreqMap[CHAR_MAX];
+internal map Map = {};
 
-internal bool
-InBounds(coords Coords, u32 Rows, u32 Columns)
+internal void
+ParseInput(string Input)
 {
-    bool Result = (Coords.X >= 0 && Coords.X < Columns) && (Coords.Y >= 0 && Coords.Y < Rows);
-    return(Result);
-}
-
-internal u64
-SolvePartOne(string Input)
-{
-    u64 Result = 0;
-
     u32 Rows = 0;
     u32 Columns = 0;
 
@@ -83,6 +81,22 @@ SolvePartOne(string Input)
         Rows++;
     }
 
+    Map.Width = Columns;
+    Map.Height = Rows;
+}
+
+internal bool
+InBounds(map Map, coords Coords)
+{
+    bool Result = (Coords.X >= 0 && Coords.X < Map.Width) && (Coords.Y >= 0 && Coords.Y < Map.Height);
+    return(Result);
+}
+
+internal u64
+SolvePartOne(string Input)
+{
+    u64 Result = 0;
+
     for(u32 Freq = 0; Freq < ArrayLength(FreqMap); Freq++)
     {
         array<coords>& Antennas = FreqMap[Freq];
@@ -97,14 +111,14 @@ SolvePartOne(string Input)
 
                     coords SiteA = Antennas.Data[I] + Displacement;
 
-                    if(InBounds(SiteA, Rows, Columns))
+                    if(InBounds(Map, SiteA))
                     {
                         Antinodes[SiteA.Y*MapStride + SiteA.X] = true;
                     }
 
                     coords SiteB = Antennas.Data[J] - Displacement;
 
-                    if(InBounds(SiteB, Rows, Columns))
+                    if(InBounds(Map, SiteB))
                     {
                         Antinodes[SiteB.Y*MapStride + SiteB.X] = true;
                     }
@@ -113,9 +127,9 @@ SolvePartOne(string Input)
         }
     }
 
-    for(u32 Row = 0; Row < Rows; Row++)
+    for(u32 Row = 0; Row < Map.Height; Row++)
     {
-        for(u32 Column = 0; Column < Columns; Column++)
+        for(u32 Column = 0; Column < Map.Width; Column++)
         {
             if(Antinodes[Row*MapStride + Column])
             {
@@ -144,7 +158,7 @@ SolvePartTwo(string Input)
 
 solution Solution08 =
 {
-    0,
+    ParseInput,
     SolvePartOne,
     SolvePartTwo,
 };
