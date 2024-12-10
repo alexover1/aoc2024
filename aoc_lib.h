@@ -17,6 +17,15 @@
 #include <cassert>
 #include <cstring>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/mman.h>
+#endif
+
+#define global static
 #define local_persist static
 #define internal static
 
@@ -95,6 +104,234 @@ IsSpace(char X)
     }
 
     return(Result);
+}
+
+struct memory_region
+{
+    memory_region *Next;
+    u32 Used;
+    u32 Size;
+    uintptr_t Data[];
+};
+
+struct memory_arena
+{
+    memory_region *Begin;
+    memory_region *End;
+};
+
+struct memory_arena_mark
+{
+    memory_region *Region;
+    u32 Used;
+};
+
+internal void
+FillMemory(u32 Size, void *MemoryP, u8 Value)
+{
+    u8 *Memory = (u8 *)MemoryP;
+    for(u32 Index = 0; Index < Size; Index++)
+    {
+        Memory[Index] = Value;
+    }
+}
+
+internal void
+CopyMemory(u32 Size, void *DestP, void *SrcP)
+{
+    u8 *Dest = (u8 *)DestP;
+    u8 *Src = (u8 *)SrcP;
+    for(u32 Index = 0; Index < Size; Index++)
+    {
+        Dest[Index] = Src[Index];
+    }
+}
+
+#define REGION_DEFAULT_CAPACITY Kilobytes(8)
+
+#ifdef _WIN32
+
+internal memory_region *
+PlatformAllocateRegion(u32 SizeInBytes)
+{
+    memory_region *Region = (memory_region *) VirtualAllocEx(
+        GetCurrentProcess(),      /* Allocate in current process address space */
+        0,                        /* Unknown position */
+        SizeInBytes,              /* Bytes to allocate */
+        MEM_COMMIT | MEM_RESERVE, /* Reserve and commit allocated page */
+        PAGE_READWRITE            /* Permissions ( Read/Write )*/
+    );
+    if (INV_HANDLE(Region))
+    {
+        Assert(!"VirtualAllocEx() failed.");
+    }
+    return(Region);
+}
+
+internal void
+PlatformFreeRegion(memory_region *Region, u32 SizeInBytes)
+{
+    if(!INV_HANDLE(Region))
+    {
+        BOOL Result = VirtualFreeEx(
+            GetCurrentProcess(),        /* Deallocate from current process address space */
+            (LPVOID)Region,             /* Address to deallocate */
+            0,                          /* Bytes to deallocate ( Unknown, deallocate entire page ) */
+            MEM_RELEASE                 /* Release the page ( And implicitly decommit it ) */
+        );
+        if(Result == FALSE)
+        {
+            Assert(!"VirtualFreeEx() failed.");
+        }
+    }
+}
+
+#else
+
+internal memory_region *
+PlatformAllocateRegion(u32 SizeInBytes)
+{
+    memory_region *Region = (memory_region *) mmap(0, SizeInBytes, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    Assert(Region != MAP_FAILED && "Memory region allocation failed!!!");
+
+    return(Region);
+}
+
+internal void
+PlatformFreeRegion(memory_region *Region, u32 SizeInBytes)
+{
+    int ErrorCode = munmap(Region, SizeInBytes);
+    Assert(ErrorCode == 0 && "Memory region deallocation failed!!!");
+}
+
+#endif // _WIN32
+
+internal memory_region *
+NewRegion(u32 Size)
+{
+    u32 SizeInBytes = sizeof(memory_region) + Size * sizeof(uintptr_t);
+
+    memory_region *Region = PlatformAllocateRegion(SizeInBytes);
+    FillMemory(SizeInBytes, Region, 0);
+
+    Region->Next = 0;
+    Region->Used = 0;
+    Region->Size = Size;
+
+    return(Region);
+}
+
+internal void
+FreeRegion(memory_region *Region)
+{
+    u32 SizeInBytes = sizeof(memory_region) + Region->Size * sizeof(uintptr_t);
+    PlatformFreeRegion(Region, SizeInBytes);
+}
+
+// TODO: Add debug statistic collection mode for arena.
+// Should collect things like:
+// - How many times new region was created
+// - How many times existing region was skipped
+// - How many times allocation exceeded REGION_DEFAULT_CAPACITY
+
+internal void *
+ArenaAlloc(memory_arena *Arena, u32 SizeInBytes)
+{
+    u32 Size = (SizeInBytes + sizeof(uintptr_t) - 1)/sizeof(uintptr_t);
+
+    if(!Arena->End)
+    {
+        Assert(Arena->Begin == NULL);
+        u32 RegionSize = REGION_DEFAULT_CAPACITY;
+        if(RegionSize < Size) RegionSize = Size;
+        Arena->End = NewRegion(RegionSize);
+        Arena->Begin = Arena->End;
+    }
+
+    while(Arena->End->Used + Size > Arena->End->Size && Arena->End->Next)
+    {
+        Arena->End = Arena->End->Next;
+    }
+
+    if(Arena->End->Used + Size > Arena->End->Size)
+    {
+        Assert(Arena->End->Next == NULL);
+        u32 RegionSize = REGION_DEFAULT_CAPACITY;
+        if(RegionSize < Size) RegionSize = Size;
+        Arena->End->Next = NewRegion(RegionSize);
+        Arena->End = Arena->End->Next;
+    }
+
+    void *Result = &Arena->End->Data[Arena->End->Used];
+    Arena->End->Used += Size;
+
+    return(Result);
+}
+
+internal memory_arena_mark
+ArenaSnapshot(memory_arena *Arena)
+{
+    memory_arena_mark Mark = {};
+
+    if(Arena->End == NULL)
+    {
+        Assert(Arena->Begin == NULL);
+        Mark.Region = Arena->End;
+        Mark.Used = 0;
+    }
+    else
+    {
+        Mark.Region = Arena->End;
+        Mark.Used = Arena->End->Used;
+    }
+
+    return Mark;
+}
+
+internal void
+ArenaReset(memory_arena *Arena)
+{
+    for(memory_region *Region = Arena->Begin; Region != NULL; Region = Region->Next)
+    {
+        Region->Used = 0;
+    }
+
+    Arena->End = Arena->Begin;
+}
+
+internal void
+ArenaRewind(memory_arena *Arena, memory_arena_mark Mark)
+{
+    if(Mark.Region == NULL)
+    {
+        ArenaReset(Arena);
+        return;
+    }
+    else
+    {
+        Mark.Region->Used = Mark.Used;
+        for (memory_region *Region = Mark.Region->Next; Region != NULL; Region = Region->Next) {
+            Region->Used = 0;
+        }
+
+        Arena->End = Mark.Region;
+    }
+}
+
+internal void
+ArenaFree(memory_arena *Arena)
+{
+    memory_region *Region = Arena->Begin;
+
+    while(Region)
+    {
+        memory_region *DeletedRegion = Region;
+        Region = Region->Next;
+        FreeRegion(DeletedRegion);
+    }
+
+    Arena->Begin = NULL;
+    Arena->End = NULL;
 }
 
 template<typename T>
@@ -268,27 +505,6 @@ ReadFileData(const char *FilePath)
     Result.Length = Size;
 
     return(Result);
-}
-
-internal void
-FillMemory(u32 Size, void *MemoryP, u8 Value)
-{
-    u8 *Memory = (u8 *)MemoryP;
-    for(u32 Index = 0; Index < Size; Index++)
-    {
-        Memory[Index] = Value;
-    }
-}
-
-internal void
-CopyMemory(u32 Size, void *DestP, void *SrcP)
-{
-    u8 *Dest = (u8 *)DestP;
-    u8 *Src = (u8 *)SrcP;
-    for(u32 Index = 0; Index < Size; Index++)
-    {
-        Dest[Index] = Src[Index];
-    }
 }
 
 internal u32

@@ -8,7 +8,8 @@
 
 #include "aoc.h"
 
-bool CheckMatch(string& Input, u64& X, u64& Y)
+internal bool
+CheckMatch(string& Input, u64& X, u64& Y)
 {
     string Prefix = "mul("_s;
     u32 MinimumLength = "mul(X,Y)"_s.Length;
@@ -36,7 +37,7 @@ bool CheckMatch(string& Input, u64& X, u64& Y)
 }
 
 internal u64
-SolvePartOne(string Input)
+SolvePartOne(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
     u64 X, Y;
@@ -57,7 +58,7 @@ SolvePartOne(string Input)
 }
 
 internal u64
-SolvePartTwo(string Input)
+SolvePartTwo(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
     bool MulsEnabled = true;

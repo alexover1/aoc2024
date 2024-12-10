@@ -223,7 +223,7 @@ CheckLinePartTwo(string Line)
 }
 
 internal u64
-SolvePartOne(string Input)
+SolvePartOne(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
@@ -243,7 +243,7 @@ SolvePartOne(string Input)
 }
 
 internal u64
-SolvePartTwo(string Input)
+SolvePartTwo(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 

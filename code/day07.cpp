@@ -9,7 +9,7 @@
 #include "aoc.h"
 
 internal u64
-SolvePartOne(string Input)
+SolvePartOne(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
@@ -73,7 +73,7 @@ ConcatenateIntegers(u64 A, u64 B) {
 }
 
 internal u64
-SolvePartTwo(string Input)
+SolvePartTwo(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 

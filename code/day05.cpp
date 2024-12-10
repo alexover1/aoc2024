@@ -14,15 +14,13 @@ struct pair_ordering_rule
     u32 Last;
 };
 
-internal array<pair_ordering_rule> Rules = {};
-internal array<u32> Pages = {};
-
 internal void
-ParseInput(string Input)
+ParseInput(string& Input, array<pair_ordering_rule>& Rules)
 {
     while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
+        Line = TrimSpace(Line);
         if(!Line.Length) break;
 
         pair_ordering_rule Rule = {};
@@ -35,7 +33,8 @@ ParseInput(string Input)
     }
 }
 
-bool CheckPageOrder(array<u32> Pages, array<pair_ordering_rule> Rules)
+internal bool
+CheckPageOrder(array<u32> Pages, array<pair_ordering_rule> Rules)
 {
     bool Result = true;
 
@@ -68,53 +67,11 @@ SkipToEnd:
     return(Result);
 }
 
-bool RuleCompareFn(pair_ordering_rule A, pair_ordering_rule B)
-{
-    bool Result = (A.First > B.First) || (A.Last > B.Last);
-    return(Result);
-}
-
-void SortPages(array<pair_ordering_rule>& Array)
-{
-    if(Array.Length < 2)
-    {
-        return;
-    }
-
-    int InitJ = 0;
-    int LastJ = Array.Length - 1;
-
-    for(;;)
-    {
-        int InitSwap = -1;
-        int PrevSwap = -1;
-
-        for(int J = InitJ; J < LastJ; J++)
-        {
-            if(RuleCompareFn(Array.Data[J], Array.Data[J+1]))
-            {
-                Swap(Array.Data[J], Array.Data[J+1]);
-                PrevSwap = J;
-                if(InitSwap == -1)
-                {
-                    InitSwap = J;
-                }
-            }
-        }
-
-        if(PrevSwap == -1)
-        {
-            return;
-        }
-
-        InitJ = Max(InitSwap-1, 0);
-        LastJ = PrevSwap;
-    }
-}
-
+// TODO: This is the only part of this day that is not thread-safe!
 internal array<pair_ordering_rule> RulesInUse = {};
 
-bool PageCompareFn(u32 PageA, u32 PageB)
+internal bool
+PageCompareFn(u32 PageA, u32 PageB)
 {
     bool Result = false;
 
@@ -132,7 +89,8 @@ bool PageCompareFn(u32 PageA, u32 PageB)
 }
 
 // Returns true if the page listing was updated.
-void UpdatePageOrder(array<u32>& Pages, array<pair_ordering_rule> Rules)
+internal void
+UpdatePageOrder(array<u32>& Pages, array<pair_ordering_rule> Rules)
 {
     RulesInUse.Length = 0;
 
@@ -166,11 +124,14 @@ void UpdatePageOrder(array<u32>& Pages, array<pair_ordering_rule> Rules)
 }
 
 internal u64
-SolvePartOne(string Input)
+SolvePartOne(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
-    ChopBy(&Input, "\n\n"_s);
+    array<pair_ordering_rule> Rules = {};
+    array<u32> Pages = {};
+
+    ParseInput(Input, Rules);
 
     while(Input.Length > 0)
     {
@@ -196,15 +157,22 @@ SolvePartOne(string Input)
         Pages.Length = 0;
     }
 
+    // TODO: Use the Arena for allocation!
+    delete[] Rules.Data;
+    delete[] Pages.Data;
+
     return(Result);
 }
 
 internal u64
-SolvePartTwo(string Input)
+SolvePartTwo(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
-    ChopBy(&Input, "\n\n"_s);
+    array<pair_ordering_rule> Rules = {};
+    array<u32> Pages = {};
+
+    ParseInput(Input, Rules);
 
     while(Input.Length > 0)
     {
@@ -231,12 +199,16 @@ SolvePartTwo(string Input)
         Pages.Length = 0;
     }
 
+    // TODO: Use the Arena for allocation!
+    delete[] Rules.Data;
+    delete[] Pages.Data;
+
     return(Result);
 }
 
 solution Solution05 =
 {
-    ParseInput,
+    0,
     SolvePartOne,
     SolvePartTwo,
 };

@@ -1,0 +1,4 @@
+:i part_one 1928
+:i part_two 0
+:b input 20
+2333133121414131402

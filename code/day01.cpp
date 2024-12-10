@@ -8,15 +8,9 @@
 
 #include "aoc.h"
 
-internal array<u64> ListOne = {};
-internal array<u64> ListTwo = {};
-
 internal void
-ParseInput(string Input)
+ParseInput(string Input, array<u64>& ListOne, array<u64>& ListTwo)
 {
-    ListOne.Length = 0;
-    ListTwo.Length = 0;
-
     while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
@@ -32,15 +26,20 @@ ParseInput(string Input)
         u64 B = ParseU64(StrB);
         Append(ListTwo, B);
     }
-
-    Sort(ListOne);
-    Sort(ListTwo);
 }
 
 internal u64
-SolvePartOne(string Input)
+SolvePartOne(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
+
+    array<u64> ListOne = {};
+    array<u64> ListTwo = {};
+
+    ParseInput(Input, ListOne, ListTwo);
+
+    Sort(ListOne);
+    Sort(ListTwo);
 
     for(u32 Index = 0; Index < ListOne.Length; Index++)
     {
@@ -57,13 +56,22 @@ SolvePartOne(string Input)
         }
     }
 
+    // TODO: Use the Arena for allocation!
+    delete[] ListOne.Data;
+    delete[] ListTwo.Data;
+
     return(Result);
 }
 
 internal u64
-SolvePartTwo(string Input)
+SolvePartTwo(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
+
+    array<u64> ListOne = {};
+    array<u64> ListTwo = {};
+
+    ParseInput(Input, ListOne, ListTwo);
 
     for(u32 Index = 0; Index < ListOne.Length; Index++)
     {
@@ -79,12 +87,16 @@ SolvePartTwo(string Input)
         Result += ListOne.Data[Index] * Count;
     }
 
+    // TODO: Use the Arena for allocation!
+    delete[] ListOne.Data;
+    delete[] ListTwo.Data;
+
     return(Result);
 }
 
 solution Solution01 =
 {
-    ParseInput,
+    0,
     SolvePartOne,
     SolvePartTwo,
 };

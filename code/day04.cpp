@@ -8,7 +8,8 @@
 
 #include "aoc.h"
 
-bool CheckColumn(array<string> Lines, u32 Row, u32 Column, string SearchString)
+internal bool
+CheckColumn(array<string> Lines, u32 Row, u32 Column, string SearchString)
 {
     bool Result = true;
 
@@ -24,7 +25,8 @@ bool CheckColumn(array<string> Lines, u32 Row, u32 Column, string SearchString)
     return(Result);
 }
 
-bool CheckCharAndBounds(array<string> Lines, u32 Row, u32 Column, char SearchChar)
+internal bool
+CheckCharAndBounds(array<string> Lines, u32 Row, u32 Column, char SearchChar)
 {
     bool InBounds = Row < Lines.Length && Column < Lines.Data[Row].Length;
     bool Result   = InBounds && Lines.Data[Row].Data[Column] == SearchChar;
@@ -32,7 +34,8 @@ bool CheckCharAndBounds(array<string> Lines, u32 Row, u32 Column, char SearchCha
     return(Result);
 }
 
-u64 CheckDiagonals(array<string> Lines, u32 Row, u32 Column)
+internal u64
+CheckDiagonals(array<string> Lines, u32 Row, u32 Column)
 {
     bool TL = true;
     bool TR = true;
@@ -57,7 +60,8 @@ u64 CheckDiagonals(array<string> Lines, u32 Row, u32 Column)
     return(Result);
 }
 
-u64 Search(array<string> Lines, u32 Row, u32 Column)
+internal u64
+Search(array<string> Lines, u32 Row, u32 Column)
 {
     // Row    : 0..Lines.Length-1
     // Column : 0..Lines[Row].Length-1
@@ -75,7 +79,8 @@ u64 Search(array<string> Lines, u32 Row, u32 Column)
     return(Result);
 }
 
-bool CheckCorners(array<string> Lines, u32 Row0, u32 Column0, u32 Row1, u32 Column1)
+internal bool
+CheckCorners(array<string> Lines, u32 Row0, u32 Column0, u32 Row1, u32 Column1)
 {
     bool Result = (Lines.Data[Row0].Data[Column0] == 'M' || Lines.Data[Row0].Data[Column0] == 'S') &&
                   (Lines.Data[Row1].Data[Column1] == 'M' || Lines.Data[Row1].Data[Column1] == 'S') &&
@@ -83,7 +88,8 @@ bool CheckCorners(array<string> Lines, u32 Row0, u32 Column0, u32 Row1, u32 Colu
     return(Result);
 }
 
-bool SearchStars(array<string> Lines, u32 Row, u32 Column)
+internal bool
+SearchStars(array<string> Lines, u32 Row, u32 Column)
 {
     bool Result = false;
 
@@ -95,10 +101,8 @@ bool SearchStars(array<string> Lines, u32 Row, u32 Column)
     return(Result);
 }
 
-internal array<string> Lines = {};
-
 internal void
-ParseInput(string Input)
+ParseInput(string Input, array<string>& Lines)
 {
     while(Input.Length > 0)
     {
@@ -110,9 +114,12 @@ ParseInput(string Input)
 }
 
 internal u64
-SolvePartOne(string Input)
+SolvePartOne(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
+
+    array<string> Lines = {};
+    ParseInput(Input, Lines);
 
     for(u32 Row = 0; Row < Lines.Length; Row++)
     {
@@ -126,13 +133,19 @@ SolvePartOne(string Input)
         }
     }
 
+    // TODO: Use Arena for allocation!
+    delete[] Lines.Data;
+
     return(Result);
 }
 
 internal u64
-SolvePartTwo(string Input)
+SolvePartTwo(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
+
+    array<string> Lines = {};
+    ParseInput(Input, Lines);
 
     for(u32 Row = 0; Row < Lines.Length; Row++)
     {
@@ -149,12 +162,15 @@ SolvePartTwo(string Input)
         }
     }
 
+    // TODO: Use Arena for allocation!
+    delete[] Lines.Data;
+
     return(Result);
 }
 
 solution Solution04 =
 {
-    ParseInput,
+    0,
     SolvePartOne,
     SolvePartTwo,
 };

@@ -31,6 +31,8 @@ website, as well as some additional cases I found useful when solving
 the problems.
 )";
 
+global memory_arena Arena = {};
+
 internal u64
 ReadIntField(string Line, string& Name)
 {
@@ -78,6 +80,8 @@ RunTestCase(const char *FileName, u64 DayNumber)
         Result = false;
         return(Result);
     }
+
+    memory_arena_mark Mark = ArenaSnapshot(&Arena);
 
     //
     // TODO: Make ReadFileData return just a pointer (so we can use mmap()).
@@ -137,7 +141,7 @@ RunTestCase(const char *FileName, u64 DayNumber)
         Solution.ParseFn(TestCase.Input);
     }
 
-    u64 PartOne = Solution.PartOneFn(TestCase.Input);
+    u64 PartOne = Solution.PartOneFn(&Arena, TestCase.Input);
     if(PartOne != TestCase.PartOne)
     {
         PrintMessage("[ERROR] Part one failed\n");
@@ -148,7 +152,7 @@ RunTestCase(const char *FileName, u64 DayNumber)
         Result = false;
     }
 
-    u64 PartTwo = Solution.PartTwoFn(TestCase.Input);
+    u64 PartTwo = Solution.PartTwoFn(&Arena, TestCase.Input);
     if(PartTwo != TestCase.PartTwo)
     {
         PrintMessage("[ERROR] Part two failed\n");
@@ -158,6 +162,8 @@ RunTestCase(const char *FileName, u64 DayNumber)
         PrintMessage("    %lu\n", PartTwo);
         Result = false;
     }
+
+    ArenaRewind(&Arena, Mark);
 
     delete[] Contents.Data;
 
@@ -229,6 +235,8 @@ RunDay(u64 DayNumber)
         {
             FormatString(sizeof(PathBuffer), PathBuffer, "%s/input%02lu.txt", DataDirectory, DayNumber);
 
+            memory_arena_mark Mark = ArenaSnapshot(&Arena);
+
             string Contents = ReadFileData(PathBuffer);
             if(Contents.Data)
             {
@@ -239,10 +247,10 @@ RunDay(u64 DayNumber)
                     Solution.ParseFn(Contents);
                 }
 
-                u64 PartOne = Solution.PartOneFn(Contents);
+                u64 PartOne = Solution.PartOneFn(&Arena, Contents);
                 PrintMessage("[INFO] Part One: %lu\n", PartOne);
 
-                u64 PartTwo = Solution.PartTwoFn(Contents);
+                u64 PartTwo = Solution.PartTwoFn(&Arena, Contents);
                 PrintMessage("[INFO] Part Two: %lu\n", PartTwo);
             }
             else
@@ -250,6 +258,8 @@ RunDay(u64 DayNumber)
                 PrintMessage("[ERROR] Input file was not found for day %lu (file name is '%s')\n", DayNumber, PathBuffer);
                 Result = false;
             }
+
+            ArenaRewind(&Arena, Mark);
         }
         else
         {
@@ -276,7 +286,10 @@ RunDay(u64 DayNumber)
                         u64 DayNumber = ChopU64(&ShortPath);
                         if(DayNumber > 0 && DayNumber <= MaxDays)
                         {
+                            // TODO: Use SetWorkingDirectory to not have to format the path here.
                             FormatString(sizeof(PathBuffer), PathBuffer, "%s/input%02lu.txt", DataDirectory, DayNumber);
+
+                            memory_arena_mark Mark = ArenaSnapshot(&Arena);
 
                             string Contents = ReadFileData(PathBuffer);
                             if(Contents.Data)
@@ -290,12 +303,13 @@ RunDay(u64 DayNumber)
 
                                 PrintMessage("[INFO] Running day %lu\n", DayNumber);
 
-                                u64 PartOne = Solution.PartOneFn(Contents);
+                                u64 PartOne = Solution.PartOneFn(&Arena, Contents);
                                 PrintMessage("[INFO] - Part One: %lu\n", PartOne);
 
-                                u64 PartTwo = Solution.PartTwoFn(Contents);
+                                u64 PartTwo = Solution.PartTwoFn(&Arena, Contents);
                                 PrintMessage("[INFO] - Part Two: %lu\n", PartTwo);
 
+                                // TODO: Use Arena!!!
                                 delete[] Contents.Data;
                             }
                             else
@@ -303,6 +317,8 @@ RunDay(u64 DayNumber)
                                 PrintMessage("[ERROR] Input file was not found for day %lu (file name is '%s')\n", DayNumber, PathBuffer);
                                 Result = false;
                             }
+
+                            ArenaRewind(&Arena, Mark);
                         }
                     }
                 }

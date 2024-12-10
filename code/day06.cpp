@@ -33,19 +33,17 @@ enum direction
 
 struct map
 {
+    char *Data;
     u32 Width;
     u32 Height;
+    u32 StartColumn;
+    u32 StartRow;
 };
 
 #define MaxThreads 8
 
-internal map Map = {};
-internal coords StartCoords = {};
-#define StartDirection DirectionUp
-
 #define MapStride 130
-internal char MapData[MapStride*MapStride];
-thread_local bool MapVisited[MapStride*MapStride];
+#define StartDirection DirectionUp
 
 internal direction
 Rotate(direction Direction)
@@ -116,9 +114,8 @@ StepAndCheckBounds(map Map, coords& Coords, direction Direction)
 }
 
 internal void
-ParseInput(string Input)
+ParseInput(string Input, map& Map)
 {
-    u32 Row = 0;
     while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
@@ -131,36 +128,32 @@ ParseInput(string Input)
             Assert(Map.Width <= MapStride);
         }
 
+        u32 Row = Map.Height;
+
         for(u32 Column = 0; Column < Line.Length; Column++)
         {
-            MapData[Row*MapStride + Column] = Line.Data[Column];
+            Map.Data[Row*MapStride + Column] = Line.Data[Column];
 
             if(Line.Data[Column] == '^')
             {
-                StartCoords.X = Column;
-                StartCoords.Y = Row;
+                Map.StartColumn = Column;
+                Map.StartRow = Row;
             }
         }
 
-        Row++;
+        Map.Height++;
     }
-
-    Map.Height = Row;
 }
 
-internal u64
-TraverseMap(map Map, u32 MaxSteps, coords *Obstacle = NULL)
+internal void
+Traverse(map Map, bool *Visited)
 {
-    u64 TotalSteps = 0;
-
-    coords Coords = StartCoords;
+    coords Coords = {Map.StartColumn, Map.StartRow};
     direction Direction = StartDirection;
 
-    FillMemory(sizeof(MapVisited), MapVisited, 0);
-
-    while(TotalSteps < MaxSteps)
+    for(;;)
     {
-        MapVisited[Coords.Y*MapStride + Coords.X] = true;
+        Visited[Coords.Y*MapStride + Coords.X] = true;
 
         coords NextCoords = Coords;
 
@@ -169,7 +162,35 @@ TraverseMap(map Map, u32 MaxSteps, coords *Obstacle = NULL)
             break;
         }
 
-        if(MapData[NextCoords.Y*MapStride + NextCoords.X] == '#' || (Obstacle && *Obstacle == NextCoords))
+        if(Map.Data[NextCoords.Y*MapStride + NextCoords.X] == '#')
+        {
+            Direction = Rotate(Direction);
+        }
+        else
+        {
+            Coords = NextCoords;
+        }
+    }
+}
+
+internal u64
+TraverseWithObstacle(map Map, u32 MaxSteps, coords Obstacle)
+{
+    u64 TotalSteps = 0;
+
+    coords Coords = {Map.StartColumn, Map.StartRow};
+    direction Direction = StartDirection;
+
+    while(TotalSteps < MaxSteps)
+    {
+        coords NextCoords = Coords;
+
+        if(StepAndCheckBounds(Map, NextCoords, Direction))
+        {
+            break;
+        }
+
+        if(Map.Data[NextCoords.Y*MapStride + NextCoords.X] == '#' || NextCoords == Obstacle)
         {
             Direction = Rotate(Direction);
         }
@@ -184,11 +205,19 @@ TraverseMap(map Map, u32 MaxSteps, coords *Obstacle = NULL)
 }
 
 internal u64
-SolvePartOne(string Input)
+SolvePartOne(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
-    TraverseMap(Map, UINT_MAX);
+    char *MapData    = (char *) ArenaAlloc(Arena, sizeof(char) * MapStride * MapStride);
+    bool *MapVisited = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
+
+    map Map = {};
+    Map.Data = MapData;
+
+    ParseInput(Input, Map);
+
+    Traverse(Map, MapVisited);
 
     for(u32 Row = 0; Row < Map.Height; Row++)
     {
@@ -205,7 +234,7 @@ SolvePartOne(string Input)
 }
 
 internal void
-PartTwoWorkerFn(u32 ThreadIndex, u32 ThreadCount, std::atomic_uint64_t *Result)
+PartTwoWorkerFn(u32 ThreadIndex, u32 ThreadCount, map Map, std::atomic_uint64_t *Result)
 {
     u32 RowsPerThread = Map.Height / ThreadCount;
 
@@ -216,11 +245,7 @@ PartTwoWorkerFn(u32 ThreadIndex, u32 ThreadCount, std::atomic_uint64_t *Result)
     {
         for(u32 Column = 0; Column < Map.Width; Column++)
         {
-            coords Coords;
-            Coords.X = Column;
-            Coords.Y = Row;
-
-            if(Coords == StartCoords || MapData[Row*MapStride + Column] != '.')
+            if((Column == Map.StartColumn && Row == Map.StartRow) || Map.Data[Row*MapStride + Column] != '.')
             {
                 continue;
             }
@@ -229,8 +254,12 @@ PartTwoWorkerFn(u32 ThreadIndex, u32 ThreadCount, std::atomic_uint64_t *Result)
             // traverse function is at least longer than the total
             // area of the map + 1.
 
+            coords Coords;
+            Coords.X = Column;
+            Coords.Y = Row;
+
             u32 MapArea = Map.Width*Map.Height;
-            if(TraverseMap(Map, MapArea + 1, &Coords) >= MapArea)
+            if(TraverseWithObstacle(Map, MapArea + 1, Coords) >= MapArea)
             {
                 (*Result)++;
             }
@@ -239,9 +268,17 @@ PartTwoWorkerFn(u32 ThreadIndex, u32 ThreadCount, std::atomic_uint64_t *Result)
 }
 
 internal u64
-SolvePartTwo(string Input)
+SolvePartTwo(memory_arena *Arena, string Input)
 {
     std::atomic_uint64_t Result = {};
+
+    char *MapData    = (char *) ArenaAlloc(Arena, sizeof(char) * MapStride * MapStride);
+    bool *MapVisited = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
+
+    map Map = {};
+    Map.Data = MapData;
+
+    ParseInput(Input, Map);
 
     u32 ThreadCount = MaxThreads;
     if(Map.Width < 50)
@@ -253,7 +290,7 @@ SolvePartTwo(string Input)
 
     for(u32 ThreadIndex = 0; ThreadIndex < ThreadCount; ThreadIndex++)
     {
-        Threads[ThreadIndex] = std::thread(PartTwoWorkerFn, ThreadIndex, ThreadCount, &Result);
+        Threads[ThreadIndex] = std::thread(PartTwoWorkerFn, ThreadIndex, ThreadCount, Map, &Result);
     }
 
     for(u32 ThreadIndex = 0; ThreadIndex < ThreadCount; ThreadIndex++)
@@ -266,7 +303,7 @@ SolvePartTwo(string Input)
 
 solution Solution06 =
 {
-    ParseInput,
+    0,
     SolvePartOne,
     SolvePartTwo,
 };

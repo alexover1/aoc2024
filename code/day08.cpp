@@ -43,17 +43,18 @@ operator-(coords Left, coords Right)
 }
 
 #define MapStride 50
-internal bool Antinodes[MapStride*MapStride];
-internal array<coords> FreqMap[CHAR_MAX];
-internal map Map = {};
+#define MaxFrequency CHAR_MAX
+// internal bool Antinodes[MapStride*MapStride];
+// internal array<coords> FreqMap[CHAR_MAX];
+// internal map Map = {};
 
 internal void
-ParseInput(string Input)
+ParseInput(string Input, map& Map, array<coords> *FreqMap)
 {
     u32 Rows = 0;
     u32 Columns = 0;
 
-    for(u32 Index = 0; Index < ArrayLength(FreqMap); Index++)
+    for(u32 Index = 0; Index < MaxFrequency; Index++)
     {
         FreqMap[Index].Length = 0;
     }
@@ -98,11 +99,17 @@ InBounds(map Map, coords Coords)
 }
 
 internal u64
-SolvePartOne(string Input)
+SolvePartOne(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
-    for(u32 Freq = 0; Freq < ArrayLength(FreqMap); Freq++)
+    bool *Antinodes = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
+    array<coords> *FreqMap = (array<coords> *) ArenaAlloc(Arena, sizeof(array<coords>) * MaxFrequency); // @Leak
+    map Map = {};
+
+    ParseInput(Input, Map, FreqMap);
+
+    for(u32 Freq = 0; Freq < MaxFrequency; Freq++)
     {
         array<coords>& Antennas = FreqMap[Freq];
 
@@ -143,17 +150,21 @@ SolvePartOne(string Input)
         }
     }
 
-    FillMemory(sizeof(Antinodes), Antinodes, 0);
-
     return(Result);
 }
 
 internal u64
-SolvePartTwo(string Input)
+SolvePartTwo(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
-    for(u32 Freq = 0; Freq < ArrayLength(FreqMap); Freq++)
+    bool *Antinodes = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
+    array<coords> *FreqMap = (array<coords> *) ArenaAlloc(Arena, sizeof(array<coords>) * MaxFrequency); // @Leak
+    map Map = {};
+
+    ParseInput(Input, Map, FreqMap);
+
+    for(u32 Freq = 0; Freq < MaxFrequency; Freq++)
     {
         array<coords>& Antennas = FreqMap[Freq];
 
@@ -196,14 +207,12 @@ SolvePartTwo(string Input)
         }
     }
 
-    FillMemory(sizeof(Antinodes), Antinodes, 0);
-
     return(Result);
 }
 
 solution Solution08 =
 {
-    ParseInput,
+    0,
     SolvePartOne,
     SolvePartTwo,
 };
