@@ -14,12 +14,11 @@
 
 #include "day.h"
 
-#define _(x) do { if(!(x)) return_defer(false); } while(0)
 bool build_aoc(Cmd *cmd)
 {
     bool result = true;
 
-    _(mkdir_if_not_exists(".build"));
+    if (!mkdir_if_not_exists(".build")) return_defer(false);
 
     Procs procs = {0};
     String_Builder sb = {0};
@@ -46,7 +45,7 @@ bool build_aoc(Cmd *cmd)
         }
     }
 
-    _(procs_wait_and_reset(&procs));
+    if (!procs_wait_and_reset(&procs)) return_defer(false);
 
     sb_append_cstr(&sb, "#pragma once\n\n");
     for (size_t i = 0; i < DAY; i += 1) {
@@ -58,7 +57,7 @@ bool build_aoc(Cmd *cmd)
     }
     sb_append_cstr(&sb, "};\n");
 
-    _(write_entire_file("solutions.h", sb.items, sb.count));
+    if (!write_entire_file("solutions.h", sb.items, sb.count)) return_defer(false);
 
     size_t object_files_count = file_paths.count;
     da_append(&file_paths, "aoc.cpp");
@@ -71,7 +70,7 @@ bool build_aoc(Cmd *cmd)
         cmd_append(cmd, "aoc.cpp", "-o", binary_path);
         da_append_many(cmd, file_paths.items, object_files_count);
 
-        _(cmd_run_sync_and_reset(cmd));
+        if (!cmd_run_sync_and_reset(cmd)) return_defer(false);
     }
 
 defer:
@@ -81,73 +80,85 @@ defer:
 
     return result;
 }
-#undef _
 
-#define _(x) do { if(!(x)) return 1; } while(0)
+bool save_next_day_header(const char *filename, size_t day)
+{
+    String_Builder sb = {0};
+
+    sb_append_cstr(&sb, temp_sprintf("#define DAY %zu\n", day));
+    bool result = write_entire_file(filename, sb.items, sb.count);
+
+    sb_free(sb);
+    return result;
+}
+
+bool save_next_day_template(size_t day)
+{
+    bool result = true;
+    String_Builder sb = {0};
+
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
+    char date_string[64];
+    assert(strftime(date_string, sizeof(date_string), "%D", tm));
+
+    sb_append_cstr(&sb, "/* ========================================================================\n");
+    sb_append_cstr(&sb, temp_sprintf("$File: day%02zu.cpp $\n", day));
+    sb_append_cstr(&sb, temp_sprintf("$Date: %s $\n", date_string));
+    sb_append_cstr(&sb, "$Revision: $\n");
+    sb_append_cstr(&sb, "$Creator: Alex Overstreet $\n");
+    sb_append_cstr(&sb, "$Notice: (C) Copyright 2024 by Alex Overstreet. All Rights Reserved. $\n");
+    sb_append_cstr(&sb, "======================================================================== */\n");
+
+    sb_append_cstr(&sb, "\n#include \"aoc.h\"\n");
+
+    sb_append_cstr(&sb, "\ninternal u64\n");
+    sb_append_cstr(&sb, "SolvePartOne(memory_arena *Arena, string Input)\n");
+    sb_append_cstr(&sb, "{\n");
+    sb_append_cstr(&sb, "    u64 Result = 0;\n");
+    sb_append_cstr(&sb, "    return(Result);\n");
+    sb_append_cstr(&sb, "}\n");
+    sb_append_cstr(&sb, "\ninternal u64\n");
+    sb_append_cstr(&sb, "SolvePartTwo(memory_arena *Arena, string Input)\n");
+    sb_append_cstr(&sb, "{\n");
+    sb_append_cstr(&sb, "    u64 Result = 0;\n");
+    sb_append_cstr(&sb, "    return(Result);\n");
+    sb_append_cstr(&sb, "}\n");
+
+    sb_append_cstr(&sb, temp_sprintf("\nsolution Solution%02zu =\n", day));
+    sb_append_cstr(&sb, "{\n    SolvePartOne,\n    SolvePartTwo,\n};\n");
+
+    if (!write_entire_file(temp_sprintf("code/day%02zu.cpp", day), sb.items, sb.count)) return_defer(false);
+
+defer:
+    sb_free(sb);
+    return result;
+}
+
 int main(int argc, char **argv)
 {
     NOB_GO_REBUILD_URSELF(argc, argv);
 
+    bool result = 0;
     const char *program = shift_args(&argc, &argv);
-
     Cmd cmd = {0};
-    String_Builder sb = {0};
 
-    if (argc > 0) {
-        const char *subcommand = shift_args(&argc, &argv);
+    if (argc > 0 && strcmp(*argv, "next_day") == 0) {
+        size_t day = DAY + 1;
+        if (!save_next_day_header("day.h", day)) return_defer(1);
+        if (!save_next_day_template(day)) return_defer(1);
+    } else {
+        if (!build_aoc(&cmd)) return 1;
 
-        if (strcmp(subcommand, "run") == 0) {
-            _(build_aoc(&cmd));
-
+        if (argc > 0) {
             cmd_append(&cmd, "./aoc");
             da_append_many(&cmd, argv, argc);
 
-            _(cmd_run_sync_and_reset(&cmd));
-        } else if (strcmp(subcommand, "next_day") == 0) {
-            size_t next_day = DAY + 1;
-
-            sb_append_cstr(&sb, temp_sprintf("#define DAY %zu\n", next_day));
-            _(write_entire_file("day.h", sb.items, sb.count));
-
-            time_t t = time(NULL);
-            struct tm *tm = localtime(&t);
-            char date_string[64];
-            assert(strftime(date_string, sizeof(date_string), "%D", tm));
-
-            sb.count = 0;
-
-            sb_append_cstr(&sb, "/* ========================================================================\n");
-            sb_append_cstr(&sb, temp_sprintf("$File: day%02zu.cpp $\n", next_day));
-            sb_append_cstr(&sb, temp_sprintf("$Date: %s $\n", date_string));
-            sb_append_cstr(&sb, "$Revision: $\n");
-            sb_append_cstr(&sb, "$Creator: Alex Overstreet $\n");
-            sb_append_cstr(&sb, "$Notice: (C) Copyright 2024 by Alex Overstreet. All Rights Reserved. $\n");
-            sb_append_cstr(&sb, "======================================================================== */\n");
-
-            sb_append_cstr(&sb, "\n#include \"aoc.h\"\n");
-
-            sb_append_cstr(&sb, "\ninternal u64\n");
-            sb_append_cstr(&sb, "SolvePartOne(memory_arena *Arena, string Input)\n");
-            sb_append_cstr(&sb, "{\n");
-            sb_append_cstr(&sb, "    u64 Result = 0;\n");
-            sb_append_cstr(&sb, "    return(Result);\n");
-            sb_append_cstr(&sb, "}\n");
-            sb_append_cstr(&sb, "\ninternal u64\n");
-            sb_append_cstr(&sb, "SolvePartTwo(memory_arena *Arena, string Input)\n");
-            sb_append_cstr(&sb, "{\n");
-            sb_append_cstr(&sb, "    u64 Result = 0;\n");
-            sb_append_cstr(&sb, "    return(Result);\n");
-            sb_append_cstr(&sb, "}\n");
-
-            sb_append_cstr(&sb, temp_sprintf("\nsolution Solution%02zu =\n", next_day));
-            sb_append_cstr(&sb, "{\n    SolvePartOne,\n    SolvePartTwo,\n};\n");
-
-            _(write_entire_file(temp_sprintf("code/day%02zu.cpp", next_day), sb.items, sb.count));
-        } else {
-            _(build_aoc(&cmd));
+            if (!cmd_run_sync_and_reset(&cmd)) return_defer(1);
         }
     }
 
+defer:
+    cmd_free(cmd);
     return 0;
 }
-#undef _

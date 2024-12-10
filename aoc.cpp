@@ -369,6 +369,7 @@ int main(int ArgCount, char **Args)
             if(ArgCount > 0)
             {
                 PrintMessage("[ERROR] The `run` subcommand takes at most 1 argument\n");
+                Result = 1;
             }
             else
             {
