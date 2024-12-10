@@ -1,5 +1,5 @@
 :i part_one 3
-:i part_two 0
+:i part_two 9
 :b input 110
 T.........
 ...T......

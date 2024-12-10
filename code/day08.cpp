@@ -53,6 +53,11 @@ ParseInput(string Input)
     u32 Rows = 0;
     u32 Columns = 0;
 
+    for(u32 Index = 0; Index < ArrayLength(FreqMap); Index++)
+    {
+        FreqMap[Index].Length = 0;
+    }
+
     while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
@@ -138,11 +143,6 @@ SolvePartOne(string Input)
         }
     }
 
-    for(u32 Index = 0; Index < ArrayLength(FreqMap); Index++)
-    {
-        FreqMap[Index].Length = 0;
-    }
-
     FillMemory(sizeof(Antinodes), Antinodes, 0);
 
     return(Result);
@@ -152,6 +152,51 @@ internal u64
 SolvePartTwo(string Input)
 {
     u64 Result = 0;
+
+    for(u32 Freq = 0; Freq < ArrayLength(FreqMap); Freq++)
+    {
+        array<coords>& Antennas = FreqMap[Freq];
+
+        for(u32 I = 0; I < Antennas.Length; I++)
+        {
+            for(u32 J = 0; J < Antennas.Length; J++)
+            {
+                if(I != J)
+                {
+                    coords Displacement = Antennas.Data[I] - Antennas.Data[J];
+
+                    coords SiteA = Antennas.Data[I];
+
+                    while(InBounds(Map, SiteA))
+                    {
+                        Antinodes[SiteA.Y*MapStride + SiteA.X] = true;
+                        SiteA = SiteA + Displacement;
+                    }
+
+                    coords SiteB = Antennas.Data[J];
+
+                    while(InBounds(Map, SiteB))
+                    {
+                        Antinodes[SiteB.Y*MapStride + SiteB.X] = true;
+                        SiteB = SiteB - Displacement;
+                    }
+                }
+            }
+        }
+    }
+
+    for(u32 Row = 0; Row < Map.Height; Row++)
+    {
+        for(u32 Column = 0; Column < Map.Width; Column++)
+        {
+            if(Antinodes[Row*MapStride + Column])
+            {
+                Result += 1;
+            }
+        }
+    }
+
+    FillMemory(sizeof(Antinodes), Antinodes, 0);
 
     return(Result);
 }

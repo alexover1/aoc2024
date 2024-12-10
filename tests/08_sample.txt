@@ -1,5 +1,5 @@
 :i part_one 14
-:i part_two 0
+:i part_two 34
 :b input 156
 ............
 ........0...
