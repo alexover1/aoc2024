@@ -355,40 +355,33 @@ Append(array<T>& Array, const T& Item)
     Array.Length += 1;
 }
 
-template<typename T>
-internal s32
-Find(array<T>& Array, T Item)
+template<typename value_type>
+internal void
+Swap(value_type *Left, value_type *Right)
 {
-    for(u32 Index = 0; Index < Array.Length; Index++)
-    {
-        if(Array.Data[Index] == Item)
-        {
-            return (s32) Index;
-        }
-    }
-    return -1;
+    value_type Temp = *Left;
+    *Left = *Right;
+    *Right = Temp;
+}
+
+template<typename type>
+internal bool
+DefaultCmpFn(type A, type B)
+{
+    return A < B;
 }
 
 template<typename T>
 internal void
-Swap(T& a, T& b)
+Sort(T *Items, u32 Length, bool (*CmpFn)(T A, T B) = DefaultCmpFn<T>)
 {
-    T t = a;
-    a = b;
-    b = t;
-}
-
-template<typename T>
-internal
-void Sort(T *Items, u32 Size)
-{
-    if(Size < 2)
+    if(Length < 2)
     {
         return;
     }
 
     int InitJ = 0;
-    int LastJ = Size - 1;
+    int LastJ = Length - 1;
 
     for(;;)
     {
@@ -397,9 +390,9 @@ void Sort(T *Items, u32 Size)
 
         for(int J = InitJ; J < LastJ; J++)
         {
-            if(Items[J] > Items[J+1])
+            if(CmpFn(Items[J], Items[J+1]))
             {
-                Swap(Items[J], Items[J+1]);
+                Swap(&Items[J], &Items[J+1]);
                 PrevSwap = J;
                 if(InitSwap == -1)
                 {
@@ -419,83 +412,10 @@ void Sort(T *Items, u32 Size)
 }
 
 template<typename T>
-internal
-void Sort(array<T>& Array)
+internal void
+Sort(array<T>& Array, bool (*CmpFn)(T A, T B) = DefaultCmpFn)
 {
-    if(Array.Length < 2)
-    {
-        return;
-    }
-
-    int InitJ = 0;
-    int LastJ = Array.Length - 1;
-
-    for(;;)
-    {
-        int InitSwap = -1;
-        int PrevSwap = -1;
-
-        for(int J = InitJ; J < LastJ; J++)
-        {
-            if(Array.Data[J] > Array.Data[J+1])
-            {
-                Swap(Array.Data[J], Array.Data[J+1]);
-                PrevSwap = J;
-                if(InitSwap == -1)
-                {
-                    InitSwap = J;
-                }
-            }
-        }
-
-        if(PrevSwap == -1)
-        {
-            return;
-        }
-
-        InitJ = Max(InitSwap-1, 0);
-        LastJ = PrevSwap;
-    }
-}
-
-template<typename T>
-internal
-void SortBy(array<T>& Array, bool (*CmpFn)(T A, T B))
-{
-    if(Array.Length < 2)
-    {
-        return;
-    }
-
-    int InitJ = 0;
-    int LastJ = Array.Length - 1;
-
-    for(;;)
-    {
-        int InitSwap = -1;
-        int PrevSwap = -1;
-
-        for(int J = InitJ; J < LastJ; J++)
-        {
-            if(CmpFn(Array.Data[J], Array.Data[J+1]))
-            {
-                Swap(Array.Data[J], Array.Data[J+1]);
-                PrevSwap = J;
-                if(InitSwap == -1)
-                {
-                    InitSwap = J;
-                }
-            }
-        }
-
-        if(PrevSwap == -1)
-        {
-            return;
-        }
-
-        InitJ = Max(InitSwap-1, 0);
-        LastJ = PrevSwap;
-    }
+    Sort(Array.Data, Array.Length, CmpFn);
 }
 
 struct buffer

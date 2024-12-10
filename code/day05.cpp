@@ -120,7 +120,7 @@ UpdatePageOrder(array<u32>& Pages, array<pair_ordering_rule> Rules)
         }
     }
 
-    SortBy(Pages, PageCompareFn);
+    Sort(Pages, PageCompareFn);
 }
 
 internal u64

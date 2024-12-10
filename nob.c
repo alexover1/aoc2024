@@ -28,13 +28,13 @@ bool build_aoc(Cmd *cmd)
         da_append(&file_paths, temp_sprintf(".build/day%02zu.o", i + 1));
     }
 
-    const char *header_paths[] = { "aoc.h", "aoc_lib.h" };
+    const char *header_paths[] = { "aoc.h", "utils.h" };
 
     for (size_t i = 0; i < DAY; i += 1) {
         const char *input_path = temp_sprintf("code/day%02zu.cpp", i + 1);
         const char *output_path = file_paths.items[i];
 
-        const char *input_paths[] = { "aoc.h", "aoc_lib.h", input_path };
+        const char *input_paths[] = { "aoc.h", "utils.h", input_path };
         if (needs_rebuild(output_path, input_paths, ARRAY_LEN(input_paths))) {
             cmd_append(cmd, "clang++", "-std=c++11", "-I.");
             cmd_append(cmd, "-c", input_path);

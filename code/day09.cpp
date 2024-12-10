@@ -75,7 +75,7 @@ RelocateBlock(fs *Fs, block *Begin, block *End)
         }
         else if(Block->Value.Length == End->Value.Length)
         {
-            Swap(Block->Value, End->Value);
+            Swap(&Block->Value, &End->Value);
             break;
         }
         else if(Block->Value.Length > End->Value.Length)
