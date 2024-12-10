@@ -432,10 +432,10 @@ operator ""_s(const char *ZString, size_t Length)
     return{(char*)ZString, (u32)Length};
 }
 
-internal string
-ReadFileData(const char *FilePath)
+internal bool
+ReadFileData(memory_arena *Arena, const char *FilePath, string& Contents)
 {
-    string Result = {};
+    bool Result = false;
 
     FILE *File = fopen(FilePath, "rb");
     if(File == NULL) return(Result);
@@ -447,11 +447,15 @@ ReadFileData(const char *FilePath)
 
     fseek(File, 0, SEEK_SET);
 
-    Result.Data = new char[Size];
-    fread(Result.Data, 1, Size, File);
+    char *FileData = (char *) ArenaAlloc(Arena, (u32) Size);
+    Assert(FileData);
+
+    fread(FileData, 1, Size, File);
     if(ferror(File)) return(Result);
 
-    Result.Length = Size;
+    Contents.Data = FileData;
+    Contents.Length = Size;
+    Result = true;
 
     return(Result);
 }

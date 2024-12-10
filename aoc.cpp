@@ -87,19 +87,17 @@ RunTestCase(const char *FileName, u64 DayNumber)
     // TODO: Make ReadFileData return just a pointer (so we can use mmap()).
     // char *FileData = ReadFileData(FileName);
     //
-    string Contents = ReadFileData(FileName);
-    if(!Contents.Data)
+    string Contents = {};
+    if(!ReadFileData(&Arena, FileName, Contents))
     {
         PrintMessage("[ERROR] Could not read the file '%s'\n", FileName);
         Result = false;
         return(Result);
     }
 
-    string Input = Contents;
-
-    while(Input.Length > 0)
+    while(Contents.Length > 0)
     {
-        string Line = ChopBy(&Input, '\n');
+        string Line = ChopBy(&Contents, '\n');
 
         if(HasPrefix(Line, ":i "_s))
         {
@@ -123,7 +121,7 @@ RunTestCase(const char *FileName, u64 DayNumber)
         else if(HasPrefix(Line, ":b "_s))
         {
             string BlobName;
-            string Blob = ReadBlobField(Line, Input, BlobName);
+            string Blob = ReadBlobField(Line, Contents, BlobName);
 
             if(BlobName == "input")
             {
@@ -159,8 +157,6 @@ RunTestCase(const char *FileName, u64 DayNumber)
     }
 
     ArenaRewind(&Arena, Mark);
-
-    delete[] Contents.Data;
 
     return(Result);
 }
@@ -232,8 +228,8 @@ RunDay(u64 DayNumber)
 
             memory_arena_mark Mark = ArenaSnapshot(&Arena);
 
-            string Contents = ReadFileData(PathBuffer);
-            if(Contents.Data)
+            string Contents = {};
+            if(ReadFileData(&Arena, PathBuffer, Contents))
             {
                 solution& Solution = Solutions[DayNumber-1];
 
@@ -281,8 +277,8 @@ RunDay(u64 DayNumber)
 
                             memory_arena_mark Mark = ArenaSnapshot(&Arena);
 
-                            string Contents = ReadFileData(PathBuffer);
-                            if(Contents.Data)
+                            string Contents = {};
+                            if(ReadFileData(&Arena, PathBuffer, Contents))
                             {
                                 solution& Solution = Solutions[DayNumber-1];
 
@@ -293,9 +289,6 @@ RunDay(u64 DayNumber)
 
                                 u64 PartTwo = Solution.PartTwoFn(&Arena, Contents);
                                 PrintMessage("[INFO] - Part Two: %lu\n", PartTwo);
-
-                                // TODO: Use Arena!!!
-                                delete[] Contents.Data;
                             }
                             else
                             {
