@@ -8,6 +8,9 @@
 
 #include "aoc.h"
 
+#define MapStride 50
+#define MaxFrequency CHAR_MAX
+
 struct coords
 {
     s32 X;
@@ -18,6 +21,18 @@ struct map
 {
     u32 Width;
     u32 Height;
+};
+
+struct antenna_list
+{
+    coords Data[MapStride*MapStride];
+    u32 Length;
+};
+
+struct frequency_map
+{
+    char Frequency;
+    antenna_list *Antennas; // By pointer so if we never use the frequency we use less memory.
 };
 
 inline coords
@@ -42,53 +57,69 @@ operator-(coords Left, coords Right)
     return(Result);
 }
 
-#define MapStride 50
-#define MaxFrequency CHAR_MAX
-// internal bool Antinodes[MapStride*MapStride];
-// internal array<coords> FreqMap[CHAR_MAX];
-// internal map Map = {};
+internal void
+Append(antenna_list *Antennas, coords Coords)
+{
+    Assert(Antennas->Length < MapStride*MapStride);
+    Antennas->Data[Antennas->Length] = Coords;
+    Antennas->Length += 1;
+}
 
 internal void
-ParseInput(string Input, map& Map, array<coords> *FreqMap)
+ParseInput(memory_arena *Arena, string Input, map& Map, array<frequency_map>& FrequencyMaps)
 {
-    u32 Rows = 0;
-    u32 Columns = 0;
-
-    for(u32 Index = 0; Index < MaxFrequency; Index++)
-    {
-        FreqMap[Index].Length = 0;
-    }
-
     while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
         Line = TrimSpace(Line);
         if(!Line.Length) continue;
 
-        if(Line.Length > Columns)
+        if(Line.Length > Map.Width)
         {
-            Columns = Line.Length;
+            Map.Width = Line.Length;
+            Assert(Map.Width <= MapStride);
         }
+
+        u32 Row = Map.Height;
 
         for(u32 Column = 0; Column < Line.Length; Column++)
         {
-            char C = Line.Data[Column];
-
-            coords Coords;
-            Coords.X = Column;
-            Coords.Y = Rows;
-
-            if(IsDigit(C) || IsAlpha(C))
+            if(IsAlnum(Line.Data[Column]))
             {
-                Append(FreqMap[C], Coords);
+                char Frequency = Line.Data[Column];
+
+                coords Coords;
+                Coords.X = Column;
+                Coords.Y = Row;
+
+                bool Found = false;
+
+                for(u32 MapIndex = 0; MapIndex < FrequencyMaps.Length; MapIndex++)
+                {
+                    if(FrequencyMaps.Data[MapIndex].Frequency == Frequency)
+                    {
+                        Append(FrequencyMaps.Data[MapIndex].Antennas, Coords);
+                        Found = true;
+                        break;
+                    }
+                }
+
+                if(!Found)
+                {
+                    antenna_list *Antennas = (antenna_list *) ArenaAlloc(Arena, sizeof(antenna_list));
+                    Append(Antennas, Coords);
+
+                    frequency_map FrequencyMap = {};
+                    FrequencyMap.Frequency = Frequency;
+                    FrequencyMap.Antennas = Antennas;
+
+                    Append(FrequencyMaps, FrequencyMap);
+                }
             }
         }
 
-        Rows++;
+        Map.Height++;
     }
-
-    Map.Width = Columns;
-    Map.Height = Rows;
 }
 
 internal bool
@@ -103,32 +134,35 @@ SolvePartOne(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
-    bool *Antinodes = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
-    array<coords> *FreqMap = (array<coords> *) ArenaAlloc(Arena, sizeof(array<coords>) * MaxFrequency); // @Leak
+    // Maps a frequency to a list of its coordinates.
+    array<frequency_map> FrequencyMaps = {};
     map Map = {};
 
-    ParseInput(Input, Map, FreqMap);
+    bool *Antinodes = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
 
-    for(u32 Freq = 0; Freq < MaxFrequency; Freq++)
+    ParseInput(Arena, Input, Map, FrequencyMaps);
+
+    for(u32 MapIndex = 0; MapIndex < FrequencyMaps.Length; MapIndex++)
     {
-        array<coords>& Antennas = FreqMap[Freq];
+        frequency_map& FrequencyMap = FrequencyMaps.Data[MapIndex];
+        antenna_list *Antennas = FrequencyMap.Antennas;
 
-        for(u32 I = 0; I < Antennas.Length; I++)
+        for(u32 I = 0; I < Antennas->Length; I++)
         {
-            for(u32 J = 0; J < Antennas.Length; J++)
+            for(u32 J = 0; J < Antennas->Length; J++)
             {
                 if(I != J)
                 {
-                    coords Displacement = Antennas.Data[I] - Antennas.Data[J];
+                    coords Displacement = Antennas->Data[I] - Antennas->Data[J];
 
-                    coords SiteA = Antennas.Data[I] + Displacement;
+                    coords SiteA = Antennas->Data[I] + Displacement;
 
                     if(InBounds(Map, SiteA))
                     {
                         Antinodes[SiteA.Y*MapStride + SiteA.X] = true;
                     }
 
-                    coords SiteB = Antennas.Data[J] - Displacement;
+                    coords SiteB = Antennas->Data[J] - Displacement;
 
                     if(InBounds(Map, SiteB))
                     {
@@ -150,6 +184,9 @@ SolvePartOne(memory_arena *Arena, string Input)
         }
     }
 
+    // TODO: Use the Arena for allocation!
+    delete[] FrequencyMaps.Data;
+
     return(Result);
 }
 
@@ -158,25 +195,28 @@ SolvePartTwo(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
-    bool *Antinodes = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
-    array<coords> *FreqMap = (array<coords> *) ArenaAlloc(Arena, sizeof(array<coords>) * MaxFrequency); // @Leak
+    // Maps a frequency to a list of its coordinates.
+    array<frequency_map> FrequencyMaps = {};
     map Map = {};
 
-    ParseInput(Input, Map, FreqMap);
+    bool *Antinodes = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
 
-    for(u32 Freq = 0; Freq < MaxFrequency; Freq++)
+    ParseInput(Arena, Input, Map, FrequencyMaps);
+
+    for(u32 MapIndex = 0; MapIndex < FrequencyMaps.Length; MapIndex++)
     {
-        array<coords>& Antennas = FreqMap[Freq];
+        frequency_map& FrequencyMap = FrequencyMaps.Data[MapIndex];
+        antenna_list *Antennas = FrequencyMap.Antennas;
 
-        for(u32 I = 0; I < Antennas.Length; I++)
+        for(u32 I = 0; I < Antennas->Length; I++)
         {
-            for(u32 J = 0; J < Antennas.Length; J++)
+            for(u32 J = 0; J < Antennas->Length; J++)
             {
                 if(I != J)
                 {
-                    coords Displacement = Antennas.Data[I] - Antennas.Data[J];
+                    coords Displacement = Antennas->Data[I] - Antennas->Data[J];
 
-                    coords SiteA = Antennas.Data[I];
+                    coords SiteA = Antennas->Data[I];
 
                     while(InBounds(Map, SiteA))
                     {
@@ -184,7 +224,7 @@ SolvePartTwo(memory_arena *Arena, string Input)
                         SiteA = SiteA + Displacement;
                     }
 
-                    coords SiteB = Antennas.Data[J];
+                    coords SiteB = Antennas->Data[J];
 
                     while(InBounds(Map, SiteB))
                     {
@@ -212,7 +252,6 @@ SolvePartTwo(memory_arena *Arena, string Input)
 
 solution Solution08 =
 {
-    0,
     SolvePartOne,
     SolvePartTwo,
 };

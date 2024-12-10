@@ -170,7 +170,6 @@ SolvePartTwo(memory_arena *Arena, string Input)
 
 solution Solution04 =
 {
-    0,
     SolvePartOne,
     SolvePartTwo,
 };

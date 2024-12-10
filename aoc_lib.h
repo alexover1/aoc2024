@@ -88,6 +88,13 @@ IsAlpha(char X)
 }
 
 internal bool
+IsAlnum(char X)
+{
+    bool Result = IsAlpha(X) || IsDigit(X);
+    return(Result);
+}
+
+internal bool
 IsSpace(char X)
 {
     bool Result = false;
@@ -125,27 +132,6 @@ struct memory_arena_mark
     memory_region *Region;
     u32 Used;
 };
-
-internal void
-FillMemory(u32 Size, void *MemoryP, u8 Value)
-{
-    u8 *Memory = (u8 *)MemoryP;
-    for(u32 Index = 0; Index < Size; Index++)
-    {
-        Memory[Index] = Value;
-    }
-}
-
-internal void
-CopyMemory(u32 Size, void *DestP, void *SrcP)
-{
-    u8 *Dest = (u8 *)DestP;
-    u8 *Src = (u8 *)SrcP;
-    for(u32 Index = 0; Index < Size; Index++)
-    {
-        Dest[Index] = Src[Index];
-    }
-}
 
 #define REGION_DEFAULT_CAPACITY Kilobytes(8)
 
@@ -212,10 +198,8 @@ NewRegion(u32 Size)
     u32 SizeInBytes = sizeof(memory_region) + Size * sizeof(uintptr_t);
 
     memory_region *Region = PlatformAllocateRegion(SizeInBytes);
-    FillMemory(SizeInBytes, Region, 0);
+    memset(Region, 0, SizeInBytes);
 
-    Region->Next = 0;
-    Region->Used = 0;
     Region->Size = Size;
 
     return(Region);
@@ -235,7 +219,7 @@ FreeRegion(memory_region *Region)
 // - How many times allocation exceeded REGION_DEFAULT_CAPACITY
 
 internal void *
-ArenaAlloc(memory_arena *Arena, u32 SizeInBytes)
+ArenaAlloc(memory_arena *Arena, u32 SizeInBytes, bool ClearMemory = true)
 {
     u32 Size = (SizeInBytes + sizeof(uintptr_t) - 1)/sizeof(uintptr_t);
 
@@ -264,6 +248,11 @@ ArenaAlloc(memory_arena *Arena, u32 SizeInBytes)
 
     void *Result = &Arena->End->Data[Arena->End->Used];
     Arena->End->Used += Size;
+
+    if(ClearMemory)
+    {
+        memset(Result, 0, SizeInBytes);
+    }
 
     return(Result);
 }

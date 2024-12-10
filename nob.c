@@ -127,20 +127,20 @@ int main(int argc, char **argv)
             sb_append_cstr(&sb, "\n#include \"aoc.h\"\n");
 
             sb_append_cstr(&sb, "\ninternal u64\n");
-            sb_append_cstr(&sb, "SolvePartOne(string Input)\n");
+            sb_append_cstr(&sb, "SolvePartOne(memory_arena *Arena, string Input)\n");
             sb_append_cstr(&sb, "{\n");
             sb_append_cstr(&sb, "    u64 Result = 0;\n");
             sb_append_cstr(&sb, "    return(Result);\n");
             sb_append_cstr(&sb, "}\n");
             sb_append_cstr(&sb, "\ninternal u64\n");
-            sb_append_cstr(&sb, "SolvePartTwo(string Input)\n");
+            sb_append_cstr(&sb, "SolvePartTwo(memory_arena *Arena, string Input)\n");
             sb_append_cstr(&sb, "{\n");
             sb_append_cstr(&sb, "    u64 Result = 0;\n");
             sb_append_cstr(&sb, "    return(Result);\n");
             sb_append_cstr(&sb, "}\n");
 
             sb_append_cstr(&sb, temp_sprintf("\nsolution Solution%02zu =\n", next_day));
-            sb_append_cstr(&sb, "{\n    0,\n    SolvePartOne,\n    SolvePartTwo,\n};\n");
+            sb_append_cstr(&sb, "{\n    SolvePartOne,\n    SolvePartTwo,\n};\n");
 
             _(write_entire_file(temp_sprintf("code/day%02zu.cpp", next_day), sb.items, sb.count));
         } else {

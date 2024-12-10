@@ -208,7 +208,6 @@ SolvePartTwo(memory_arena *Arena, string Input)
 
 solution Solution05 =
 {
-    0,
     SolvePartOne,
     SolvePartTwo,
 };

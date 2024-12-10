@@ -136,11 +136,6 @@ RunTestCase(const char *FileName, u64 DayNumber)
 
     solution& Solution = Solutions[DayNumber-1];
 
-    if(Solution.ParseFn)
-    {
-        Solution.ParseFn(TestCase.Input);
-    }
-
     u64 PartOne = Solution.PartOneFn(&Arena, TestCase.Input);
     if(PartOne != TestCase.PartOne)
     {
@@ -242,11 +237,6 @@ RunDay(u64 DayNumber)
             {
                 solution& Solution = Solutions[DayNumber-1];
 
-                if(Solution.ParseFn)
-                {
-                    Solution.ParseFn(Contents);
-                }
-
                 u64 PartOne = Solution.PartOneFn(&Arena, Contents);
                 PrintMessage("[INFO] Part One: %lu\n", PartOne);
 
@@ -295,11 +285,6 @@ RunDay(u64 DayNumber)
                             if(Contents.Data)
                             {
                                 solution& Solution = Solutions[DayNumber-1];
-
-                                if(Solution.ParseFn)
-                                {
-                                    Solution.ParseFn(Contents);
-                                }
 
                                 PrintMessage("[INFO] Running day %lu\n", DayNumber);
 

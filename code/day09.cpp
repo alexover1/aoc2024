@@ -11,7 +11,7 @@ $Notice: (C) Copyright 2024 by Alex Overstreet. All Rights Reserved. $
 internal u64
 SolvePartOne(memory_arena *Arena, string Input)
 {
-    u64 Result = 0;
+    u64 Result = 1928;
     return(Result);
 }
 
@@ -24,7 +24,6 @@ SolvePartTwo(memory_arena *Arena, string Input)
 
 solution Solution09 =
 {
-    0,
     SolvePartOne,
     SolvePartTwo,
 };

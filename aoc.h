@@ -19,7 +19,6 @@ struct test_case
 
 struct solution
 {
-    void (*ParseFn)(string Input);
     u64  (*PartOneFn)(memory_arena *Arena, string Input);
     u64  (*PartTwoFn)(memory_arena *Arena, string Input);
 };
