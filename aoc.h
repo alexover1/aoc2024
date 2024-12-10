@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "aoc_lib.h"
+#include "utils.h"
 
 struct test_case
 {
