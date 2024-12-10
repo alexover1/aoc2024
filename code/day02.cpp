@@ -8,6 +8,8 @@
 
 #include "aoc.h"
 
+#define MaxLevels 10
+
 internal bool
 PairIsSafe(u64 Level, u64 NextLevel)
 {
@@ -100,7 +102,7 @@ CheckLinePartOne(string Line)
 }
 
 internal bool
-CheckLinePartTwo(string Line)
+CheckLinePartTwo(string Line, u64 *Levels)
 {
     bool Result = true;
 
@@ -108,28 +110,30 @@ CheckLinePartTwo(string Line)
     bool Increasing = false;
     bool SetOrder = false;
 
-    local_persist array<u64> Levels = {};
-    Levels.Length = 0;
+    u32 LevelCount = 0;
+
+    Line = TrimSpace(Line);
 
     while(Line.Length > 0)
     {
-        string StrLevel = ChopBy(&Line, ' ');
-        u64 Level = ParseU64(StrLevel);
-        Line = TrimLeft(Line);
+        Assert(LevelCount < MaxLevels);
 
-        Append(Levels, Level);
+        Levels[LevelCount] = ChopU64(&Line);
+        LevelCount++;
+
+        Line = TrimLeft(Line);
     }
 
     const u32 LineCount = 3;
-    Assert(Levels.Length >= LineCount);
+    Assert(LevelCount >= LineCount);
 
-    for(u32 Index = 0; Index < Levels.Length-LineCount; Index++)
+    for(u32 Index = 0; Index < LevelCount-LineCount; Index++)
     {
         const u32 WindowCount = 4;
 
         bool NextIncreasing;
 
-        if(LineIsSafe(&Levels.Data[Index], LineCount, NextIncreasing))
+        if(LineIsSafe(&Levels[Index], LineCount, NextIncreasing))
         {
             if(SetOrder)
             {
@@ -166,7 +170,7 @@ CheckLinePartTwo(string Line)
             for(u32 J = 0; J < WindowCount; J++)
             {
                 if(J == SkipIndex) continue;
-                TempLevels[TempIndex++] = Levels.Data[Index+J];
+                TempLevels[TempIndex++] = Levels[Index+J];
             }
 
             if(LineIsSafe(TempLevels, LineCount, NextIncreasing))
@@ -193,7 +197,7 @@ CheckLinePartTwo(string Line)
                 // checking the rest of the line.
                 for(u32 J = 0; J < LineCount; J++)
                 {
-                    Levels.Data[Index+J+1] = TempLevels[J];
+                    Levels[Index+J+1] = TempLevels[J];
                 }
 
                 AlreadySkipped = true;
@@ -209,15 +213,13 @@ CheckLinePartTwo(string Line)
     }
 
     bool NextIncreasing;
-    if(!LineIsSafe(&Levels.Data[Levels.Length-LineCount], LineCount, NextIncreasing))
+    if(!LineIsSafe(&Levels[LevelCount-LineCount], LineCount, NextIncreasing))
     {
         if(AlreadySkipped || (SetOrder && Increasing != NextIncreasing))
         {
             Result = false;
         }
     }
-
-    Levels.Length = 0;
 
     return(Result);
 }
@@ -247,13 +249,15 @@ SolvePartTwo(memory_arena *Arena, string Input)
 {
     u64 Result = 0;
 
+    u64 *Levels = (u64 *) ArenaAlloc(Arena, sizeof(u64) * MaxLevels);
+
     while(Input.Length > 0)
     {
         string Line = ChopBy(&Input, '\n');
         Line = TrimSpace(Line);
         if(!Line.Length) continue;
 
-        if(CheckLinePartTwo(Line))
+        if(CheckLinePartTwo(Line, Levels))
         {
             Result += 1;
         }
