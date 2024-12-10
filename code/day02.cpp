@@ -1,6 +1,6 @@
 /* ========================================================================
    $File: day02.cpp $
-   $Date: 12/8/24 $
+   $Date: 12/08/24 $
    $Revision: $
    $Creator: Alex Overstreet $
    $Notice: (C) Copyright 2024 by Alex Overstreet. All Rights Reserved. $
