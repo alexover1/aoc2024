@@ -257,6 +257,17 @@ ArenaAlloc(memory_arena *Arena, u32 SizeInBytes, bool ClearMemory = true)
     return(Result);
 }
 
+internal void *
+ArenaRealloc(memory_arena *Arena, void *OldMemory, u32 OldSize, u32 NewSize)
+{
+    if(NewSize <= OldSize) return(OldMemory);
+
+    void *NewMemory = ArenaAlloc(Arena, NewSize);
+    memcpy(NewMemory, OldMemory, OldSize);
+
+    return(NewMemory);
+}
+
 internal memory_arena_mark
 ArenaSnapshot(memory_arena *Arena)
 {

@@ -1,0 +1,4 @@
+:i part_one 55312
+:i part_two 0
+:b input 7
+125 17

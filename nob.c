@@ -143,6 +143,26 @@ defer:
     return result;
 }
 
+bool save_test_template(size_t day)
+{
+    bool result = true;
+    String_Builder sb = {0};
+
+    sb_append_cstr(&sb, ":i part_one 0\n");
+    sb_append_cstr(&sb, ":i part_two 0\n");
+    sb_append_cstr(&sb, ":b input 0\n");
+
+    const char *file_path = temp_sprintf("tests/%02zu_sample.txt", day);
+
+    if (!write_entire_file(file_path, sb.items, sb.count)) return_defer(false);
+
+    nob_log(NOB_INFO, "Created %s", file_path);
+
+defer:
+    sb_free(sb);
+    return result;
+}
+
 int main(int argc, char **argv)
 {
     NOB_GO_REBUILD_URSELF(argc, argv);
@@ -156,6 +176,7 @@ int main(int argc, char **argv)
 
         if (!save_next_day_header("day.h", day)) return_defer(1);
         if (!save_next_day_template(day)) return_defer(1);
+        if (!save_test_template(day)) return_defer(1);
     } else {
         if (!build_aoc(&cmd)) return 1;
 
