@@ -8,135 +8,9 @@ $Notice: (C) Copyright 2024 by Alex Overstreet. All Rights Reserved. $
 
 #include "aoc.h"
 
-#define U32_MAX 0xffffffffu
-#define U64_MAX 0xffffffffffffffffull
-
-struct node
-{
-    node *Next;
-    node *Previous;
-    u64 Value;
-};
-
-struct node_list
-{
-    memory_arena *Arena;
-
-    node *Begin;
-    node *End;
-
-    u64 Length;
-};
-
-internal void
-Append(node_list *Nodes, u64 Value)
-{
-    node *Node = (node *) ArenaAlloc(Nodes->Arena, sizeof(node));
-
-    Node->Next = NULL;
-    Node->Previous = Nodes->End;
-    Node->Value = Value;
-
-    if(Nodes->End)
-    {
-        Nodes->End->Next = Node;
-        Nodes->End = Node;
-    }
-    else
-    {
-        Nodes->Begin = Node;
-        Nodes->End = Node;
-    }
-
-    Nodes->Length++;
-}
-
-internal void
-InsertAfter(node_list *Nodes, node *Node, u64 Value)
-{
-    node *NewNode = (node *) ArenaAlloc(Nodes->Arena, sizeof(node));
-
-    NewNode->Next = Node->Next;
-    NewNode->Previous = Node;
-    NewNode->Value = Value;
-
-    Node->Next = NewNode;
-
-    Nodes->Length++;
-}
-
-internal node_list
-ParseInput(memory_arena *Arena, string Input)
-{
-    node_list Nodes = {};
-    Nodes.Arena = Arena;
-
-    Input = TrimLeft(Input);
-
-    while(Input.Length > 0)
-    {
-        u64 Value = ChopU64(&Input);
-        Append(&Nodes, Value);
-
-        Input = TrimLeft(Input);
-    }
-
-    return(Nodes);
-}
-
-internal u64
-NumDigits(u64 X)
-{
-    return((X == 0) ? 1 : (u64)log10(X) + 1);
-}
-
-internal void
-Transform(node_list *Nodes)
-{
-    for(node *Node = Nodes->Begin; Node; Node = Node->Next)
-    {
-        if(Node->Value == 0)
-        {
-            Node->Value = 1;
-        }
-        else
-        {
-            u64 Digits = NumDigits(Node->Value);
-            if(Digits%2 == 0)
-            {
-                u64 LeftPart = Node->Value / pow(10, Digits / 2);
-                u64 RightPart = Node->Value % (u64)pow(10, Digits / 2);
-
-                Node->Value = LeftPart;
-                InsertAfter(Nodes, Node, RightPart);
-
-                Node = Node->Next;
-            }
-            else
-            {
-                Node->Value *= 2024;
-            }
-        }
-    }
-}
-
-internal u64
-SolvePartOne(memory_arena *Arena, string Input)
-{
-    node_list Nodes = ParseInput(Arena, Input);
-
-    for(u32 Attempt = 0; Attempt < 25; Attempt++)
-    {
-        Transform(&Nodes);
-    }
-
-    return(Nodes.Length);
-}
-
 struct map
 {
     memory_arena *Arena;
-
     u64 *Keys;
     u64 *Values;
     u32 Length;
@@ -170,7 +44,31 @@ Insert(map *Map, u64 Key, u64 Value)
 }
 
 internal map
-ParseInput2(memory_arena *Arena, string Input)
+CopyMap(memory_arena *Arena, map Map)
+{
+    map Result = {};
+
+    Result.Arena = Arena;
+
+    if(Map.Allocated > 0)
+    {
+        u32 Size = sizeof(u64) * Map.Allocated;
+        u8 *Memory = (u8 *) ArenaAlloc(Arena, Size * 2);
+
+        Result.Keys = (u64 *) Memory;
+        memcpy(Result.Keys, Map.Keys, sizeof(u64) * Map.Length);
+        Result.Values = (u64 *) (Memory + Size);
+        memcpy(Result.Values, Map.Values, sizeof(u64) * Map.Length);
+
+        Result.Allocated = Map.Allocated;
+        Result.Length = Map.Length;
+    }
+
+    return(Result);
+}
+
+internal map
+ParseInput(memory_arena *Arena, string Input)
 {
     map Map = {};
     Map.Arena = Arena;
@@ -188,20 +86,28 @@ ParseInput2(memory_arena *Arena, string Input)
     return(Map);
 }
 
-internal map
-Transform2(map Map)
+internal u64
+NumDigits(u64 X)
 {
-    map TempMap = {};
-    TempMap.Arena = Map.Arena;
+    return((X == 0) ? 1 : (u64)log10(X) + 1);
+}
 
-    for(u32 Index = 0; Index < Map.Length; Index++)
+internal void
+Transform(memory_arena *TempArena, map *Map)
+{
+    memory_arena_mark Mark = ArenaSnapshot(TempArena);
+    map TempMap = CopyMap(TempArena, *Map);
+
+    Map->Length = 0;
+
+    for(u32 Index = 0; Index < TempMap.Length; Index++)
     {
-        u64 Value = Map.Keys[Index];
-        u64 Counter = Map.Values[Index];
+        u64 Value = TempMap.Keys[Index];
+        u64 Counter = TempMap.Values[Index];
 
         if(Value == 0)
         {
-            Insert(&TempMap, 1, Counter);
+            Insert(Map, 1, Counter);
         }
         else
         {
@@ -211,29 +117,34 @@ Transform2(map Map)
                 u64 LeftPart = Value / pow(10, Digits / 2);
                 u64 RightPart = Value % (u64)pow(10, Digits / 2);
 
-                Insert(&TempMap, LeftPart, Counter);
-                Insert(&TempMap, RightPart, Counter);
+                Insert(Map, LeftPart, Counter);
+                Insert(Map, RightPart, Counter);
             }
             else
             {
                 u64 NewValue = Value * 2024;
-                Insert(&TempMap, NewValue, Counter);
+                Insert(Map, NewValue, Counter);
             }
         }
     }
 
-    return(TempMap);
+    ArenaRewind(TempArena, Mark);
 }
 
 internal u64
-SolvePartTwo(memory_arena *Arena, string Input)
+Solve(memory_arena *Arena, string Input, u64 MaxAttempts)
 {
-    map Map = ParseInput2(Arena, Input);
+    // TODO: Temporary memory should be part of the arena itself.
+    memory_arena TempArena = {};
 
-    for(u32 Attempt = 0; Attempt < 75; Attempt++)
+    map Map = ParseInput(Arena, Input);
+
+    for(u32 Attempt = 0; Attempt < MaxAttempts; Attempt++)
     {
-        Map = Transform2(Map);
+        Transform(&TempArena, &Map);
     }
+
+    ArenaFree(&TempArena);
 
     u64 Result = 0;
 
@@ -243,6 +154,18 @@ SolvePartTwo(memory_arena *Arena, string Input)
     }
 
     return(Result);
+}
+
+internal u64
+SolvePartOne(memory_arena *Arena, string Input)
+{
+    return(Solve(Arena, Input, 25));
+}
+
+internal u64
+SolvePartTwo(memory_arena *Arena, string Input)
+{
+    return(Solve(Arena, Input, 75));
 }
 
 solution Solution11 =
