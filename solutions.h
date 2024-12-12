@@ -11,6 +11,7 @@ extern solution Solution08;
 extern solution Solution09;
 extern solution Solution10;
 extern solution Solution11;
+extern solution Solution12;
 
 internal solution Solutions[] =
 {
@@ -25,4 +26,5 @@ internal solution Solutions[] =
     Solution09,
     Solution10,
     Solution11,
+    Solution12,
 };

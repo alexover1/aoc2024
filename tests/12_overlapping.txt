@@ -1,0 +1,7 @@
+:i part_one 772
+:b input 30
+OOOOO
+OXOXO
+OOOOO
+OXOXO
+OOOOO

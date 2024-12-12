@@ -12,9 +12,11 @@
 
 struct test_case
 {
+    string Input;
     u64 PartOne;
     u64 PartTwo;
-    string Input;
+    bool HasPartOne;
+    bool HasPartTwo;
 };
 
 struct solution

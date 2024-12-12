@@ -1,0 +1,8 @@
+:i part_two 368
+:b input 42
+AAAAAA
+AAABBA
+AAABBA
+ABBAAA
+ABBAAA
+AAAAAA

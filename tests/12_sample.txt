@@ -1,0 +1,7 @@
+:i part_one 140
+:i part_two 80
+:b input 20
+AAAA
+BBCD
+BBCC
+EEEC

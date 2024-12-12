@@ -104,18 +104,19 @@ RunTestCase(const char *FileName, u64 DayNumber)
             string ValueName;
             u64 Value = ReadIntField(Line, ValueName);
 
-            if(ValueName == "part")
+            if(ValueName == "part_one")
             {
                 TestCase.PartOne = Value;
-                TestCase.PartTwo = Value;
-            }
-            else if(ValueName == "part_one")
-            {
-                TestCase.PartOne = Value;
+                TestCase.HasPartOne = true;
             }
             else if(ValueName == "part_two")
             {
                 TestCase.PartTwo = Value;
+                TestCase.HasPartTwo = true;
+            }
+            else
+            {
+                PrintMessage("[WARNING] Unknown integer field '%S'\n", ValueName);
             }
         }
         else if(HasPrefix(Line, ":b "_s))
@@ -126,6 +127,10 @@ RunTestCase(const char *FileName, u64 DayNumber)
             if(BlobName == "input")
             {
                 TestCase.Input = Blob;
+            }
+            else
+            {
+                PrintMessage("[WARNING] Unknown blob field '%S'\n", BlobName);
             }
         }
     }
@@ -144,26 +149,32 @@ RunTestCase(const char *FileName, u64 DayNumber)
 
     solution& Solution = Solutions[DayNumber-1];
 
-    u64 PartOne = Solution.PartOneFn(&Arena, TestCase.Input);
-    if(PartOne != TestCase.PartOne)
+    if(TestCase.HasPartOne)
     {
-        PrintMessage("[ERROR] Part one failed\n");
-        PrintMessage("  Expected:\n");
-        PrintMessage("    %lu\n", TestCase.PartOne);
-        PrintMessage("  Actual:\n");
-        PrintMessage("    %lu\n", PartOne);
-        Result = false;
+        u64 Result = Solution.PartOneFn(&Arena, TestCase.Input);
+        if(Result != TestCase.PartOne)
+        {
+            PrintMessage("[ERROR] Part one failed\n");
+            PrintMessage("  Expected:\n");
+            PrintMessage("    %lu\n", TestCase.PartOne);
+            PrintMessage("  Actual:\n");
+            PrintMessage("    %lu\n", Result);
+            Result = false;
+        }
     }
 
-    u64 PartTwo = Solution.PartTwoFn(&Arena, TestCase.Input);
-    if(PartTwo != TestCase.PartTwo)
+    if(TestCase.HasPartTwo)
     {
-        PrintMessage("[ERROR] Part two failed\n");
-        PrintMessage("  Expected:\n");
-        PrintMessage("    %lu\n", TestCase.PartTwo);
-        PrintMessage("  Actual:\n");
-        PrintMessage("    %lu\n", PartTwo);
-        Result = false;
+        u64 Result = Solution.PartTwoFn(&Arena, TestCase.Input);
+        if(Result != TestCase.PartTwo)
+        {
+            PrintMessage("[ERROR] Part two failed\n");
+            PrintMessage("  Expected:\n");
+            PrintMessage("    %lu\n", TestCase.PartTwo);
+            PrintMessage("  Actual:\n");
+            PrintMessage("    %lu\n", Result);
+            Result = false;
+        }
     }
 
     ArenaRewind(&Arena, Mark);

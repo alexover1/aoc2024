@@ -1,0 +1,7 @@
+:i part_two 236
+:b input 30
+EEEEE
+EXXXX
+EEEEE
+EXXXX
+EEEEE

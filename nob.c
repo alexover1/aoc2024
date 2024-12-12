@@ -36,7 +36,7 @@ bool build_aoc(Cmd *cmd)
 
         const char *input_paths[] = { "aoc.h", "utils.h", input_path };
         if (needs_rebuild(output_path, input_paths, ARRAY_LEN(input_paths))) {
-            cmd_append(cmd, "clang++", "-std=c++11", "-I.");
+            cmd_append(cmd, "clang++", "-std=c++11", "-I.", "-g");
             cmd_append(cmd, "-c", input_path);
             cmd_append(cmd, "-o", output_path);
 
@@ -66,7 +66,7 @@ bool build_aoc(Cmd *cmd)
     const char *binary_path = "./aoc";
 
     if (needs_rebuild(binary_path, file_paths.items, file_paths.count)) {
-        cmd_append(cmd, "clang++", "-std=c++11");
+        cmd_append(cmd, "clang++", "-std=c++11", "-g");
         cmd_append(cmd, "aoc.cpp", "-o", binary_path);
         da_append_many(cmd, file_paths.items, object_files_count);
 
@@ -149,7 +149,6 @@ bool save_test_template(size_t day)
     String_Builder sb = {0};
 
     sb_append_cstr(&sb, ":i part_one 0\n");
-    sb_append_cstr(&sb, ":i part_two 0\n");
     sb_append_cstr(&sb, ":b input 0\n");
 
     const char *file_path = temp_sprintf("tests/%02zu_sample.txt", day);
