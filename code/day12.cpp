@@ -9,19 +9,18 @@ $Notice: (C) Copyright 2024 by Alex Overstreet. All Rights Reserved. $
 #include "aoc.h"
 
 #define MapStride 140
-#define MaxRegions 1024
 
 struct map
 {
     char *Data;
-    u32 Width;
-    u32 Height;
+    s32 Width;
+    s32 Height;
 };
 
 struct point
 {
-    u32 Row;
-    u32 Column;
+    s32 Row;
+    s32 Column;
 };
 
 inline bool
@@ -35,24 +34,6 @@ operator!=(point Left, point Right)
 {
     return((Left.Row != Right.Row) || (Left.Column != Right.Column));
 }
-
-inline point
-MakePoint(u32 Row, u32 Column)
-{
-    return{Row, Column};
-}
-
-struct region
-{
-    bool *Data;
-    u32 Stride;
-    u32 StartRow;
-    u32 StartColumn;
-    u32 EndRow;
-    u32 EndColumn;
-    u64 Area;
-    char Label;
-};
 
 #define _SIZE_T_BITS ((sizeof (size_t)) * 8)
 
@@ -178,8 +159,9 @@ Insert(unordered_set *Set, point Value)
 }
 
 internal point *
-FindValue(unordered_set *Set, point Value)
+FindValue(unordered_set *Set, s32 Row, s32 Column)
 {
+    point Value = {Row, Column};
     size_t Hash = HashBytes(&Value, sizeof(Value), Set->Seed);
 
     u32 Mask = (Set->Allocated - 1);
@@ -215,7 +197,7 @@ ParseInput(memory_arena *Arena, string Input)
             Assert(Map.Width <= MapStride);
         }
 
-        u32 Row = Map.Height;
+        s32 Row = Map.Height;
         for(u32 Column = 0; Column < Line.Length; Column++)
         {
             Map.Data[Row*MapStride + Column] = Line.Data[Column];
@@ -228,9 +210,9 @@ ParseInput(memory_arena *Arena, string Input)
 }
 
 internal void
-FillRegion(unordered_set *Region, char AreaLabel, map Map, u32 Row, u32 Column, bool *Visited)
+FillRegion(unordered_set *Region, char AreaLabel, map Map, s32 Row, s32 Column, bool *Visited)
 {
-    u32 Index = Row*MapStride + Column;
+    s32 Index = Row*MapStride + Column;
 
     if(Map.Data[Index] != AreaLabel || Visited[Index])
     {
@@ -247,6 +229,8 @@ FillRegion(unordered_set *Region, char AreaLabel, map Map, u32 Row, u32 Column, 
     if(Column > 0) FillRegion(Region, AreaLabel, Map, Row, Column-1, Visited);
     if(Column + 1 < Map.Width) FillRegion(Region, AreaLabel, Map, Row, Column+1, Visited);
 }
+
+#define MaxRegions 1024
 
 struct regions
 {
@@ -265,9 +249,9 @@ FindAllRegions(memory_arena *Arena, map Map)
     bool *Visited  = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
     bool *Searched = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
 
-    for(u32 Row = 0; Row < Map.Height; Row++)
+    for(s32 Row = 0; Row < Map.Height; Row++)
     {
-        for(u32 Column = 0; Column < Map.Width; Column++)
+        for(s32 Column = 0; Column < Map.Width; Column++)
         {
             if(!Searched[Row*MapStride + Column])
             {
@@ -318,10 +302,10 @@ SolvePartOne(memory_arena *Arena, string Input)
             {
                 point P = Region->Values[Index];
 
-                Perimeter += (P.Row == 0 || FindValue(Region, MakePoint(P.Row-1, P.Column)) == NULL);
-                Perimeter += ((P.Row + 1 == Map.Height) || FindValue(Region, MakePoint(P.Row+1, P.Column)) == NULL);
-                Perimeter += (P.Column == 0 || FindValue(Region, MakePoint(P.Row, P.Column-1)) == NULL);
-                Perimeter += ((P.Column + 1 == Map.Width) || FindValue(Region, MakePoint(P.Row, P.Column+1)) == NULL);
+                if((P.Row == 0) || FindValue(Region, P.Row-1, P.Column) == NULL) Perimeter++;
+                if((P.Row + 1 == Map.Height) || FindValue(Region, P.Row+1, P.Column) == NULL) Perimeter++;
+                if((P.Column == 0) || FindValue(Region, P.Row, P.Column-1) == NULL) Perimeter++;
+                if((P.Column + 1 == Map.Width) || FindValue(Region, P.Row, P.Column+1) == NULL) Perimeter++;
             }
         }
 
@@ -334,7 +318,40 @@ SolvePartOne(memory_arena *Arena, string Input)
 internal u64
 SolvePartTwo(memory_arena *Arena, string Input)
 {
+    map Map = ParseInput(Arena, Input);
+    regions Regions = FindAllRegions(Arena, Map);
+
     u64 Result = 0;
+
+    for(u32 RegionIndex = 0; RegionIndex < Regions.Count; RegionIndex++)
+    {
+        u64 Sides = 0;
+        unordered_set *Region = &Regions.Data[RegionIndex];
+
+        for(u32 Index = 0; Index < Region->Allocated; Index++)
+        {
+            if(Region->Occupied[Index])
+            {
+                point P = Region->Values[Index];
+                s32 Row = P.Row;
+                s32 Col = P.Column;
+
+                // Outer corners
+                Sides += FindValue(Region, Row, Col-1) == NULL && FindValue(Region, Row-1, Col) == NULL;
+                Sides += FindValue(Region, Row, Col+1) == NULL && FindValue(Region, Row-1, Col) == NULL;
+                Sides += FindValue(Region, Row, Col-1) == NULL && FindValue(Region, Row+1, Col) == NULL;
+                Sides += FindValue(Region, Row, Col+1) == NULL && FindValue(Region, Row+1, Col) == NULL;
+                // Inner corners
+                Sides += FindValue(Region, Row, Col-1) != NULL && FindValue(Region, Row-1, Col) != NULL && FindValue(Region, Row - 1, Col - 1) == NULL;
+                Sides += FindValue(Region, Row, Col+1) != NULL && FindValue(Region, Row-1, Col) != NULL && FindValue(Region, Row - 1, Col + 1) == NULL;
+                Sides += FindValue(Region, Row, Col-1) != NULL && FindValue(Region, Row+1, Col) != NULL && FindValue(Region, Row + 1, Col - 1) == NULL;
+                Sides += FindValue(Region, Row, Col+1) != NULL && FindValue(Region, Row+1, Col) != NULL && FindValue(Region, Row + 1, Col + 1) == NULL;
+            }
+        }
+
+        Result += Sides * Region->Length;
+    }
+
     return(Result);
 }
 

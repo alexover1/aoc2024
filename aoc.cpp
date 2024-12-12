@@ -255,10 +255,10 @@ RunDay(u64 DayNumber)
                 solution& Solution = Solutions[DayNumber-1];
 
                 u64 PartOne = Solution.PartOneFn(&Arena, Contents);
-                PrintMessage("[INFO] Part One: %lu\n", PartOne);
+                PrintMessage("[INFO] Part one: %lu\n", PartOne);
 
                 u64 PartTwo = Solution.PartTwoFn(&Arena, Contents);
-                PrintMessage("[INFO] Part Two: %lu\n", PartTwo);
+                PrintMessage("[INFO] Part two: %lu\n", PartTwo);
             }
             else
             {
