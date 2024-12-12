@@ -19,164 +19,42 @@ struct map
 
 struct point
 {
-    s32 Row;
-    s32 Column;
+    s32 X;
+    s32 Y;
 };
 
 inline bool
 operator==(point Left, point Right)
 {
-    return((Left.Row == Right.Row) && (Left.Column == Right.Column));
+    return((Left.X == Right.X) && (Left.Y == Right.Y));
 }
 
 inline bool
 operator!=(point Left, point Right)
 {
-    return((Left.Row != Right.Row) || (Left.Column != Right.Column));
+    return((Left.X != Right.X) || (Left.Y != Right.Y));
 }
 
-#define _SIZE_T_BITS ((sizeof (size_t)) * 8)
-
-#define RotateLeft(X, N)   (((X) << (N)) | ((X) >> (_SIZE_T_BITS - (N))))
-#define RotateRight(X, N)  (((X) >> (N)) | ((X) << (_SIZE_T_BITS - (N))))
-
-internal size_t
-HashBytes(void *Bytes_, size_t Length, size_t Seed)
+inline point
+operator+(point Left, point Right)
 {
-    u8 *Bytes = (u8 *) Bytes_;
-
-    if(Length == 8 && sizeof(size_t) == 8)
-    {
-        size_t Hash = Bytes[0] | (Bytes[1] << 8) | (Bytes[2] << 16) | (Bytes[3] << 24);
-        Hash |= (size_t) (Bytes[4] | (Bytes[5] << 8) | (Bytes[6] << 16) | (Bytes[7] << 24)) << 16 << 16; // Avoid warning if size_t == 4
-        Hash ^= Seed;
-        Hash = (~Hash) + (Hash << 21);
-        Hash ^= RotateRight(Hash,24);
-        Hash *= 265;
-        Hash ^= RotateRight(Hash,14);
-        Hash ^= Seed;
-        Hash *= 21;
-        Hash ^= RotateRight(Hash,28);
-        Hash += (Hash << 31);
-        Hash = (~Hash) + (Hash << 18);
-        return(Hash);
-    }
-    else if(Length == 4)
-    {
-        u32 Hash = Bytes[0] | (Bytes[1] << 8) | (Bytes[2] << 16) | (Bytes[3] << 24);
-        // HASH32-BB  Bob Jenkin's presumably-accidental version of Thomas Wang hash with rotates turned into shifts.
-        // Note that converting these back to rotates makes it run a lot slower, presumably due to collisions, so I'm
-        // not really sure what's going on.
-        Hash ^= Seed;
-        Hash = (Hash ^ 61) ^ (Hash >> 16);
-        Hash = Hash + (Hash << 3);
-        Hash = Hash ^ (Hash >> 4);
-        Hash = Hash * 0x27d4eb2d;
-        Hash ^= Seed;
-        Hash = Hash ^ (Hash >> 15);
-        return((((size_t) Hash << 16 << 16) | Hash) ^ Seed);
-    }
-    else
-    {
-        Assert(!"Only hash of 4 or 8 bytes is currently supported");
-    }
+    return{Left.X+Right.X, Left.Y+Right.Y};
 }
 
-#define UNORDERED_SET_INITIAL_CAPACITY 16
-
-struct unordered_set
+inline point
+operator-(point Left, point Right)
 {
-    memory_arena *Arena;
-    size_t Seed;
-    point *Values;
-    bool *Occupied;
-    u32 Length;
-    u32 Allocated;
-};
-
-internal void Insert(unordered_set *Set, point Value);
-
-internal void
-ExtendCapacity(unordered_set *Set)
-{
-    if(Set->Values == NULL)
-    {
-        Assert(Set->Allocated == 0);
-        Assert(Set->Length == 0);
-
-        Assert(Set->Arena);
-
-        Set->Allocated = UNORDERED_SET_INITIAL_CAPACITY;
-        Set->Values = (point *) ArenaAlloc(Set->Arena, (sizeof(point) + sizeof(bool)) * Set->Allocated);
-        Set->Occupied = (bool *) ((u8 *)Set->Values + sizeof(point) * Set->Allocated);
-    }
-    else
-    {
-        unordered_set NewSet = {};
-        NewSet.Arena = Set->Arena;
-        NewSet.Seed = Set->Seed;
-
-        NewSet.Allocated = Set->Allocated * 2;
-        NewSet.Values = (point *) ArenaAlloc(NewSet.Arena, (sizeof(point) + sizeof(bool)) * NewSet.Allocated);
-        NewSet.Occupied = (bool *) ((u8 *)NewSet.Values + sizeof(point) * NewSet.Allocated);
-
-        for(u32 Index = 0; Index < Set->Length; Index++)
-        {
-            Insert(&NewSet, Set->Values[Index]);
-        }
-
-        memcpy(Set, &NewSet, sizeof(NewSet));
-    }
+    return{Left.X-Right.X, Left.Y-Right.Y};
 }
 
-internal void
-Insert(unordered_set *Set, point Value)
+internal char
+GetMap(map Map, point P)
 {
-    if(Set->Length >= Set->Allocated)
+    if(P.X < 0 || P.X == Map.Width || P.Y < 0 || P.Y == Map.Height)
     {
-        ExtendCapacity(Set);
+        return('.');
     }
-
-    size_t Hash = HashBytes(&Value, sizeof(Value), Set->Seed);
-
-    u32 Mask = (Set->Allocated - 1);
-    size_t Index = Hash & Mask;
-
-    while(Set->Occupied[Index])
-    {
-        if(Set->Values[Index] == Value)
-        {
-            return;
-        }
-
-        Index = (Index + 1) & Mask;
-    }
-
-    Set->Occupied[Index] = true;
-    Set->Values[Index] = Value;
-
-    Set->Length++;
-}
-
-internal point *
-FindValue(unordered_set *Set, s32 Row, s32 Column)
-{
-    point Value = {Row, Column};
-    size_t Hash = HashBytes(&Value, sizeof(Value), Set->Seed);
-
-    u32 Mask = (Set->Allocated - 1);
-    size_t Index = Hash & Mask;
-    for(u32 I = 0; I < Set->Allocated && Set->Occupied[Index] && Set->Values[Index] != Value; I++)
-    {
-        Index = (Index + 1) & Mask;
-    }
-
-    point *Result = NULL;
-    if(Set->Values && Set->Occupied[Index] && Set->Values[Index] == Value)
-    {
-        Result = &Set->Values[Index];
-    }
-    return(Result);
+    return(Map.Data[P.Y*MapStride + P.X]);
 }
 
 internal map
@@ -209,107 +87,76 @@ ParseInput(memory_arena *Arena, string Input)
     return(Map);
 }
 
-internal void
-FillRegion(unordered_set *Region, char AreaLabel, map Map, s32 Row, s32 Column, bool *Visited)
+struct dfs_result
 {
-    s32 Index = Row*MapStride + Column;
-
-    if(Map.Data[Index] != AreaLabel || Visited[Index])
-    {
-        return;
-    }
-
-    Visited[Index] = true;
-
-    point Point = {Row, Column};
-    Insert(Region, Point);
-
-    if(Row > 0) FillRegion(Region, AreaLabel, Map, Row-1, Column, Visited);
-    if(Row + 1 < Map.Height) FillRegion(Region, AreaLabel, Map, Row+1, Column, Visited);
-    if(Column > 0) FillRegion(Region, AreaLabel, Map, Row, Column-1, Visited);
-    if(Column + 1 < Map.Width) FillRegion(Region, AreaLabel, Map, Row, Column+1, Visited);
-}
-
-#define MaxRegions 1024
-
-struct regions
-{
-    unordered_set *Data;
-    u32 Count;
+    u32 Area;
+    u32 Perimeter;
+    u32 Sides;
 };
 
-internal regions
-FindAllRegions(memory_arena *Arena, map Map)
+internal dfs_result
+DFS(bool *Visited, map Map, char Color, s32 X, s32 Y, s32 DX, s32 DY)
 {
-    regions Regions = {};
-    Regions.Data = (unordered_set *) ArenaAlloc(Arena, sizeof(unordered_set) * MaxRegions);
+    s32 I = Y*MapStride + X;
 
-    memory_arena_mark Mark = ArenaSnapshot(Arena);
-
-    bool *Visited  = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
-    bool *Searched = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
-
-    for(s32 Row = 0; Row < Map.Height; Row++)
+    if(Map.Data[I] != Color)
     {
-        for(s32 Column = 0; Column < Map.Width; Column++)
-        {
-            if(!Searched[Row*MapStride + Column])
-            {
-                Assert(Regions.Count < MaxRegions);
-                unordered_set *Region = &Regions.Data[Regions.Count];
-                Regions.Count++;
-
-                Region->Arena = Arena;
-
-                char AreaLabel = Map.Data[Row*MapStride + Column];
-
-                memset(Visited, 0, sizeof(bool) * MapStride * MapStride);
-                FillRegion(Region, AreaLabel, Map, Row, Column, Visited);
-
-                for(u32 Index = 0; Index < Region->Allocated; Index++)
-                {
-                    if(Region->Occupied[Index])
-                    {
-                        point P = Region->Values[Index];
-                        Searched[P.Row*MapStride + P.Column] = true;
-                    }
-                }
-            }
-        }
+        point P0 = {X - DY, Y + DX};
+        point P1 = {X - DX - DY, Y - DY + DX};
+        if(GetMap(Map,P0) == Color || GetMap(Map,P1) != Color)
+            return{0,1,1};
+        else
+            return{0,1,0};
     }
 
-    ArenaRewind(Arena, Mark);
+    if(Visited[I])
+    {
+        return{0,0,0};
+    }
+    Visited[I] = true;
 
-    return(Regions);
+    dfs_result Result = {};
+    Result.Area = 1;
+
+    local_persist point Directions[4] =
+    {
+        { 1,  0},
+        {-1,  0},
+        { 0,  1},
+        { 0, -1},
+    };
+    for(u32 Index = 0; Index < ArrayLength(Directions); Index++)
+    {
+        point D = Directions[Index];
+        dfs_result NextResult = DFS(Visited, Map, Color, X+D.X, Y+D.Y, D.X, D.Y);
+        Result.Area += NextResult.Area;
+        Result.Perimeter += NextResult.Perimeter;
+        Result.Sides += NextResult.Sides;
+    }
+
+    return(Result);
 }
 
 internal u64
 SolvePartOne(memory_arena *Arena, string Input)
 {
     map Map = ParseInput(Arena, Input);
-    regions Regions = FindAllRegions(Arena, Map);
+
+    bool *Visited = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
 
     u64 Result = 0;
 
-    for(u32 RegionIndex = 0; RegionIndex < Regions.Count; RegionIndex++)
+    for(s32 Y = 0; Y < Map.Height; Y++)
     {
-        u64 Perimeter = 0;
-        unordered_set *Region = &Regions.Data[RegionIndex];
-
-        for(u32 Index = 0; Index < Region->Allocated; Index++)
+        for(s32 X = 0; X < Map.Width; X++)
         {
-            if(Region->Occupied[Index])
+            s32 I = Y*MapStride + X;
+            if(!Visited[I])
             {
-                point P = Region->Values[Index];
-
-                if((P.Row == 0) || FindValue(Region, P.Row-1, P.Column) == NULL) Perimeter++;
-                if((P.Row + 1 == Map.Height) || FindValue(Region, P.Row+1, P.Column) == NULL) Perimeter++;
-                if((P.Column == 0) || FindValue(Region, P.Row, P.Column-1) == NULL) Perimeter++;
-                if((P.Column + 1 == Map.Width) || FindValue(Region, P.Row, P.Column+1) == NULL) Perimeter++;
+                dfs_result R = DFS(Visited, Map, Map.Data[I], X, Y, 1, 0);
+                Result += R.Area * R.Perimeter;
             }
         }
-
-        Result += Perimeter * Region->Length;
     }
 
     return(Result);
@@ -319,37 +166,22 @@ internal u64
 SolvePartTwo(memory_arena *Arena, string Input)
 {
     map Map = ParseInput(Arena, Input);
-    regions Regions = FindAllRegions(Arena, Map);
+
+    bool *Visited = (bool *) ArenaAlloc(Arena, sizeof(bool) * MapStride * MapStride);
 
     u64 Result = 0;
 
-    for(u32 RegionIndex = 0; RegionIndex < Regions.Count; RegionIndex++)
+    for(s32 Y = 0; Y < Map.Height; Y++)
     {
-        u64 Sides = 0;
-        unordered_set *Region = &Regions.Data[RegionIndex];
-
-        for(u32 Index = 0; Index < Region->Allocated; Index++)
+        for(s32 X = 0; X < Map.Width; X++)
         {
-            if(Region->Occupied[Index])
+            s32 I = Y*MapStride + X;
+            if(!Visited[I])
             {
-                point P = Region->Values[Index];
-                s32 Row = P.Row;
-                s32 Col = P.Column;
-
-                // Outer corners
-                Sides += FindValue(Region, Row, Col-1) == NULL && FindValue(Region, Row-1, Col) == NULL;
-                Sides += FindValue(Region, Row, Col+1) == NULL && FindValue(Region, Row-1, Col) == NULL;
-                Sides += FindValue(Region, Row, Col-1) == NULL && FindValue(Region, Row+1, Col) == NULL;
-                Sides += FindValue(Region, Row, Col+1) == NULL && FindValue(Region, Row+1, Col) == NULL;
-                // Inner corners
-                Sides += FindValue(Region, Row, Col-1) != NULL && FindValue(Region, Row-1, Col) != NULL && FindValue(Region, Row - 1, Col - 1) == NULL;
-                Sides += FindValue(Region, Row, Col+1) != NULL && FindValue(Region, Row-1, Col) != NULL && FindValue(Region, Row - 1, Col + 1) == NULL;
-                Sides += FindValue(Region, Row, Col-1) != NULL && FindValue(Region, Row+1, Col) != NULL && FindValue(Region, Row + 1, Col - 1) == NULL;
-                Sides += FindValue(Region, Row, Col+1) != NULL && FindValue(Region, Row+1, Col) != NULL && FindValue(Region, Row + 1, Col + 1) == NULL;
+                dfs_result R = DFS(Visited, Map, Map.Data[I], X, Y, 1, 0);
+                Result += R.Area * R.Sides;
             }
         }
-
-        Result += Sides * Region->Length;
     }
 
     return(Result);
