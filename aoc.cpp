@@ -130,6 +130,16 @@ RunTestCase(const char *FileName, u64 DayNumber)
         }
     }
 
+    // TODO: It would be nice to print extra information, like how much time each part took and the amount of memory used.
+    //
+    // u32 MemoryUsed = 0;
+    // for(region *Region = Mark.Region->Next; Region != NULL; Region = Region->Next)
+    // {
+    //     MemoryUsed += Region->Used;
+    // }
+    // PrintMessage("Memory used: %m\n", Mark.Region->Used - Mark.Used);
+    //
+
     PrintMessage("[INFO] Running %s\n", FileName);
 
     solution& Solution = Solutions[DayNumber-1];
